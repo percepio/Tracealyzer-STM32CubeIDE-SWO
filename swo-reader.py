@@ -7,6 +7,9 @@ import sys
 
 HOST = "127.0.0.1"
 
+global SWO_PORT
+SWO_PORT = 61998
+
 global ide_connected
 ide_connected = False
 
@@ -16,9 +19,11 @@ swo_connected = False
 global bytecount
 bytecount = 0
     
+   
 # TCP client, connects to GDB server and reads SWO data.
 def gdb_swo_reader():
-    PORT = 61998
+    global SWO_PORT
+
     global swo_connected
     swo_connected = False
     
@@ -26,15 +31,16 @@ def gdb_swo_reader():
     bytecount = 0
     
     while True:
-        print("SWO reader connecting to port " + str(PORT) + ".")
+        print("[swo-reader] Connecting to GDB server on port " + str(SWO_PORT) + ".")
         
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect(('localhost', PORT))
+            s.connect(('localhost', SWO_PORT))
         except:
-            print("Error connecting, is GDB server started?")
-        
-        print("SWO reader connected.")
+            print("[swo-reader] Error connecting, is GDB server started?")
+            return
+            
+        print("[swo-reader] Connected.")
         swo_connected = True
         
         file_path = "swo-data.bin"
@@ -43,85 +49,93 @@ def gdb_swo_reader():
         # This makes the GDB server output the SWO data.        
         byte_array = bytearray( [1, 0, 0, 0, 0, 0, 0, 0] )
         
-        s.send(byte_array)
+        try:
+            s.send(byte_array)
+        except:
+            print("[swo-reader] Error sending to GDB server.")
+            return
+            
         bytecount = 0
         
-        print("Reading SWO data, writing to " + file_path)
+        print("[swo-reader] Ready for data. Writing trace data to: " + file_path)
         while (swo_connected):
             
             try:                              
-                data = s.recv(50*1024)
+                data = s.recv(250*1024)
                                 
                 if (data == b''):
-                    print("swo_reader_thread: Disconnected.")
+                    print("[swo-reader] Disconnected.")
                     swo_connected = False
                 else:
                     bytecount = bytecount + len(data)
                     outfile.write(data);
                 
             except KeyboardInterrupt:
-                print("Ctrl-C (thread)")
+                print("[swo-reader] Ctrl-C (thread)")
                 swo_connected = False
 
             except Exception as err:                
-                print("SWO reader disconnected.")
+                print("[swo-reader] Disconnected.")
                 swo_connected = False
                 
         s.close()
         outfile.close()
-        print("SWO reader closed.")
-        exit(0)
+        print("[swo-reader] Reader thread closed.")
 
 
 # STM32CubeIDE feature will connect here, looking for SWO data, but won't get any.
 # Starts the SWO reader when IDE connected...
 
 def ide_swo_fakesender():
-    global ide_connected
+    global ide_connected   
     ide_connected = False
-    PORT = 61235  
+    PORT = 61236  
     while True:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((HOST, PORT))
-            print("Waiting for IDE connection.")
-            s.listen()
-            conn, addr = s.accept()
+        ide_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #ide_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #ide_socket.bind((HOST, PORT))        
+        ide_socket.bind(("127.0.0.1", 61035))
+        print("[swo-reader] Waiting for IDE connection.")
+        ide_socket.listen()
+        conn, addr = ide_socket.accept()
            
-            print("Connected, waiting 3 sec...")
-            ide_connected = True
+        print("[swo-reader] Connected, waiting 3 sec...")
+        ide_connected = True
             
-            # Waits for GDB server to be ready for the SWO connection.
-            sleep(3)
+        # Waits for GDB server to be ready for the SWO connection.
+        sleep(3)
             
-            print("Connecting to GDB server for SWO data.")
-            thread_gdb_swo_reader = threading.Thread(target=gdb_swo_reader)
-            thread_gdb_swo_reader.start();
+        print("[swo-reader] Starting SWO reader thread.")
+        thread_gdb_swo_reader = threading.Thread(target=gdb_swo_reader)
+        thread_gdb_swo_reader.start();
 
-            while (ide_connected):
-                try:
-                    data = conn.recv(5)
-                    if (data == b''):
-                        print("IDE disconnected.")
-                        ide_connected = False
-                        s.close()
-                except:
-                        print("IDE disconnected.")
-                        ide_connected = False
-                        s.close()
+        while (ide_connected):
+            try:
+                data = conn.recv(5)
+                if (data == b''):
+                    ide_connected = False
+            except:
+                    ide_connected = False
+                    s.close()
+        print("[swo-reader] IDE disconnected.")
 
-print("Starting server thread for STM32CubeIDE")
+print("[swo-reader] Starting server thread for STM32CubeIDE")
 thread_ide_swo_fakesender = threading.Thread(target=ide_swo_fakesender)
 thread_ide_swo_fakesender.start()
 
 last = 0
-while True:   
+running = True
+while running:   
     try:
         sleep(2)
-        if (bytecount != last):
-            print("Data rate: " + str((bytecount-last)/2000) + " KB/s")
+        if (bytecount != last and bytecount > 0):
+            print("[swo-reader] Data rate: " + str((bytecount-last)/2000) + " KB/s")
             
         last = bytecount
         
+        if (bytecount > 0 and ide_connected == False):
+            running = False
+        
     except KeyboardInterrupt:
-        print("Ctrl-C (main)")
-        swo_connected = False
+        running = False 
+
