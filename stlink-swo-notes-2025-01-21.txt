@@ -1,0 +1,51 @@
+Notes, STLINK streaming:
+
+When Tracealyzer is closed, I can read SWO data at up to 10 MHz without issues.
+So the STLINK SWO performance/stabiliy seem very satisfactory!
+(I think this computer is rotten and the File I/O from Tracealyzer is just too much to handle.)
+
+I have fixed the issues with closing the python script it seems. I cleaned it up a bit and removed an unnecessry thread.
+
+
+Now trying to streamline the workflow, so the GDB server and the python script works nicely together.
+
+Current approach:
+
+* Running the GDB server using the External Tools menu. 
+  This way, it shows up in the Eclipse console.
+
+* Starting the python script from the "Run Commands":
+  shell START cmd.exe /C swo-reader.bat
+
+  - This runs the GDB server is ready to start the system, basically when halted in main(), or just before. At least, after programming it seems.
+
+  - By using the START command, we open a new standalone terminal for the python script.
+    This works better than running two processes in the Eclipse console (the output from the first is halted when the second starts...)
+
+Problem: The fake port thing needs to start before the debug session begins.
+Modified approach:
+
+1. Split the python script in two parts, "swo-reader.py" and "dummyport.py".
+
+2. Start "dummyport.py" together with the GDB server (just before) - No output here.
+
+3. Start "swo-reader.py" in the Run Commands, like now. This could print the data speed, if desired.
+   This approach should ensure that the GDB server is ready when the swo-script starts.
+
+4. The two commands could take the PORT value as argument.
+
+5. The GDB start script could also take the SWO port value as argument.
+
+The various settings could be like this:
+
+- Debug Configuration, Debugger, Port number: Set <GDB port>
+- Debug Configuration, Debugger, Serial Wire Viewer, Port number: Set <Dummy SWO port>
+- Debug Configuration, Run Commands: e.g. "shell start cmd.exe /C swo-reader.py <SWO port> <filename>"
+External Tools Configuration:
+ - Location: e.g. "run_stlink_gdb_server.bat" // This would also start dummyport.py, with argument <Dummy SWO port>
+ - Arguments: <GDB port> <SWO port> <Dummy SWO port> <GBD folder> <ST Programmer folder>
+ 
+Also:
+Add good error messages when ports are alredy busy.
+"Port 12345 is already in use. Check that you don't have another instance running, or change the default setting for <PORT NAME> in <WHERE FOUND>"
+Make sure the terminal doesn't close before this can be read. Add a pause if needed.

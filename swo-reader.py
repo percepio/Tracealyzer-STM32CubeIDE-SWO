@@ -67,7 +67,7 @@ def gdb_swo_reader():
     while (swo_connected):
         
         try:                              
-            data = s.recv(250*1024)
+            data = s.recv(1000000)
                             
             if (data == b''):
                 print("[swo-reader] Disconnected.")
@@ -99,39 +99,42 @@ def ide_swo_fakesender():
     global running
     ide_connected = False
     PORT = 61035
-    while True:
-        ide_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ide_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        ide_socket.bind((HOST, PORT))        
-        print("[swo-reader] Waiting for IDE connection.")
-        ide_socket.listen()
-        conn, addr = ide_socket.accept()
-           
-        print("[swo-reader] Connected, waiting 3 sec...")
-        ide_connected = True
-            
-        # Waits for GDB server to be ready for the SWO connection.
-        sleep(3)
-            
-        print("[swo-reader] Starting SWO reader thread.")
-        thread_gdb_swo_reader = threading.Thread(target=gdb_swo_reader)
-        thread_gdb_swo_reader.start();
 
-        while (ide_connected):
-            try:
-                data = conn.recv(5)
-                if (data == b''):
-                    ide_connected = False
-            except:
-                    ide_connected = False
+    ide_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ide_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    ide_socket.bind((HOST, PORT))        
+    print("[swo-reader] Waiting for IDE connection.")
+    ide_socket.listen()
+    conn, addr = ide_socket.accept()
+       
+    print("[swo-reader] Connected, waiting 3 sec...")
+    ide_connected = True
         
-        running = False
-        s.close()
-        print("[swo-reader] IDE disconnected.")
+    # Waits for GDB server to be ready for the SWO connection.
+    # sleep(9)
+        
+    print("[swo-reader] Starting SWO reader thread.")
+    thread_gdb_swo_reader = threading.Thread(target=gdb_swo_reader)
+    thread_gdb_swo_reader.start();
 
-print("[swo-reader] Starting server thread for STM32CubeIDE")
-thread_ide_swo_fakesender = threading.Thread(target=ide_swo_fakesender)
-thread_ide_swo_fakesender.start()
+   # while (ide_connected):
+   #     try:
+   #         data = conn.recv(5)
+   #         if (data == b''):
+   #             ide_connected = False
+   #     except:
+   #             ide_connected = False
+   # 
+   # running = False
+   # s.close()
+   # print("[swo-reader] IDE disconnected.")
+
+   
+#print("[swo-reader] Starting server thread for STM32CubeIDE")
+#thread_ide_swo_fakesender = threading.Thread(target=ide_swo_fakesender)
+#thread_ide_swo_fakesender.start()
+
+ide_swo_fakesender()
 
 last = 0
 running = True
