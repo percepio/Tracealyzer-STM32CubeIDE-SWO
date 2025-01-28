@@ -51,6 +51,8 @@
 
 volatile unsigned int throttle_delay = 5000;
 
+TraceStringHandle_t chn = NULL;
+
 int main(void)
 {
 	vTraceInitialize();
@@ -79,6 +81,7 @@ int main(void)
 	/* Initialize Percepio TraceRecorder (stores events to ring buffer) */
 	xTraceEnable(TRC_START);
 
+	xTraceStringRegister("Throttle delay", &chn);
 	printf("\nTracealyzer STLINK/ITM streaming demo\n\n");
 
     /* Just to set a better name for the main thread...*/
@@ -100,6 +103,7 @@ int main(void)
         xTraceTaskReady(TASK_MAIN);
     	xTraceTaskSwitch((void*)TASK_MAIN, 0);
 
+    	xTracePrintF(chn, "%d", throttle_delay);
     	for (volatile int counter=0; counter<throttle_delay; counter++);
 
         xTraceTaskSwitch((void*)TASK_IDLE, 0);
