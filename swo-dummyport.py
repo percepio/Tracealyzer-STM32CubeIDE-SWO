@@ -19,23 +19,35 @@ ctrl_c_pressed = False
 # Setup:
 #
 #    1. Configure TraceRecorder to use the ARM_ITM streamport (see ...)
+#       - Explain more....
 #
 #    2. Configure SWO output in STM32CubeIDE (ITM port 1 enabled, no timestamps etc.)
-#       -
+#       - Explain more....
 #       -
 #
 #    3. Enable SWO output
-#       -
+#       - Explain more....
 #       -
 #
 #    4. Update your Debug Configuration in STM32CubeIDE:
-#       -
+#       - Explain more....
 #       -
 #
-#    5. Test-run a debug session to check that "swo-data.bin" is created in
-#       your project folder and contains some data.
+#    5. Add this script as an "External Tool" in STM32CubeIDE.
+#       - Set the name to "GDB server with trace output" or similar.
+#       - Locate the "External Tools" button (next to "Run") and click the dropdown menu.
+#       - Select External Tools Configuration...
+#       - Under "Location", select "Browse File System" and select
+#         the "stm32cubeide_external_tool_start_gdb_server" script.
+#       - Under "Working Directory", select your project root folder.
+#       - Save and run it to test that it works. You should see a terminal window
+#         with the GDB server waiting for a connection. Keep it open for the next step.
 #
-#    6. Configure Tracealyzer to read the data from swo-data.bin (PSF streaming settings).
+#    6. Launch a debug session to check that your debugging is working, and that "swo-data.bin"
+#       is created in your project folder. The file size of "swo-data.bin" should increase when
+#       the target is running.
+#
+#    7. Configure Tracealyzer to read the data from swo-data.bin (PSF streaming settings).
 #       - Open File -> Settings and select "PSF Streaming Settings"
 #       - Target Connection: File System
 #       - File: path/to/swo-data.bin
@@ -52,7 +64,7 @@ ctrl_c_pressed = False
 #       
 #       You should see messages labeled "[swo-reader]" about the data rate and total
 #       data received. You may use breakpoints and halt/go debugging without interfering
-#       with the tracing, but the SWV features in STM32CubeIDE will not provide any data.
+#       with the tracing, although the SWV features in STM32CubeIDE will not get any data.
 #
 #    3. Start a streaming trace session in Tracealyzer, using the setup described above.
 #       This opens the "Live Stream" window. 
@@ -61,45 +73,53 @@ ctrl_c_pressed = False
 #       complete data stream to correctly display the trace.
 #
 # Troubleshooting:
+#
 # The main risk is "Missed events", i.e. data loss in the transfer. Missed events are detected
 # and reported by Tracealyzer, and typically only occurs if streaming at over 500 KB/s for
-# several minutes when using this approach. In case you see Missed Events, make sure to resolve
-# such issues before studying the traces in Tracealyzer, otherwise the displayed data might be
-# partically incorrect.
+# several minutes when using this approach. 
 #
-# One reason for Missed events can be the SWO frequency. Up to 7 MHz seems reliable, but in our
-# experiments STM32CubeIDE selected 12 MHz by default (core clock divided by 10) which resulted
-# in unreliable data transmission. It is recommended to select "Limit SWO frequency" and specify
+# In case you see Missed Events, make sure to resolve such issues before studying the traces in
+# Tracealyzer, otherwise the displayed data might be partically incorrect.
+#
+# There seem to be two main reasons for missed events when using this approach:
+# 
+# 1. Too high SWO frequency. Up to 7 MHz seems reliable, but in our experiments STM32CubeIDE
+# selected 12 MHz by default (core clock divided by 10) which resulted in occational missed
+# events also at lower event rate. It is recommended to select "Limit SWO frequency" and specify
 # a lower value, for example 7 MHz.
-
-# Another  reason for such missed events is most likely the small SWO data buffer in the
-# STLINK GDB server. It seems this can overflow at very high and continuous data rates, probably
-# due to interference from other applications or background activity in the operating system. 
 #
-# If you see Missed events, please try the following:
+# 1.1. In your STM32CubeIDE Debug Configuration, open the "Debugger" page and you find the 
+# "Limit SWO clock" in the "Serial View Viewer" panel. Try 6-7 MHz to begin with.
 #
-#    1. Make sure to limit the SWO frequency to avoid transmission errors.
-#       In your STM32CubeIDE Debug Configuration, open the "Debugger" page and you find
-#       the "Limit SWO clock" in the "Serial View Viewer" panel. Try 6-7 MHz to begin with.
-#       If you still have issues, try a lower value, otherwise you can try a higher value to
-#       see if you can increase the performance a bit.
-#       Note that minor changes in SWO frequency might not have any effect, as the GDB server
-#       has fixed valid baud rates and applies the nearest lower valid setting. This appears to
-#       be in steps of 500 KHz or so. The actual SWO baud rate used can be seen in
-#       the GDB server window. For example, if setting 7000 KHz results in "baudrate 6620000Hz".
+# 1.2. If you still have issues, try a lower value, otherwise you can try a higher value to see
+# if you can increase the performance a bit.
+# Note that minor changes in SWO frequency might not have any effect, as the GDB server
+# has fixed valid baud rates and applies the nearest lower valid setting. This appears to
+# be in steps of 500 KHz or so. The actual SWO baud rate used can be seen in the GDB server
+# window. For example, if setting 7000 KHz results in "baudrate 6620000Hz".
 #
-#    2. Disable live visualization in Tracealyzer. This may cause higher load on the
-#       host computer, that may contribute to Missed Events at higher event rates.
-#       - Open Tracealyzer and select "Open Live Stream Tool" from the Trace menu.
-#       - Before starting the session, enable the checkbox "Disable Live Visualization".
-#       - Click "Connect" and "Start Session" to begin reading the data, either while the
-#         target is running or after it has been stopped.
-#       - Select "Stop Session" to show the trace data in Tracealyzer.
+# 2. Another reason for such missed events is continuously high event rate causing occational
+# overflows in the (pretty small) SWO data buffer in the STLINK GDB server or STLINK driver.
+# Thay may occur due to interference from other applications or background activity in there
+# operating system. 
 #
-#    3. If this doesn't help, you may try closing other open applications that isn't
-#       needed at the moment, perhaps also Tracealyzer itself (at least if a large
-#       trace is already loaded). Open Tracealyzer again when there is no data transmission,
-#       for example when halted on a breakpoint, and load the data like described above.
+# 2.1. Disable live visualization in Tracealyzer. This may cause higher load on the
+#      host computer, that may contribute to Missed Events at higher event rates.
+#    - Open Tracealyzer and select "Open Live Stream Tool" from the Trace menu.
+#    - Before starting the session, enable the checkbox "Disable Live Visualization".
+#    - Click "Connect" and "Start Session" to begin reading the data, either while the
+#      target is running or after it has been stopped.
+#    - Select "Stop Session" to show the trace data in Tracealyzer.
+#
+# 2.2. If your trace data rate exceeds 500 KB/s on average, try reducing the data rate using
+#      the settings in trcConfig.h. For example, tracing of OS Tick events is usually redundant
+#      and can be disabled. Also, if you added custom events like tracing interrupt handlers or
+#      "User Events" in frequently executed code, you can try commenting them out.
+#
+# 2.3. If this doesn't help, you may try closing other open applications that isn't
+#      needed at the moment, perhaps also Tracealyzer itself (at least if a large
+#      trace is already loaded). Open Tracealyzer again when there is no data transmission,
+#      for example when halted on a breakpoint, and load the data like described above.
 #
 # How it works:
 #
