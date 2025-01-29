@@ -42,10 +42,9 @@ Note that this is already done in this example project.
     - Port number: 61035
 	
 	**Note:** The port numbers are the defaults, but can changed if already in use. 
-    However, changing the port numbers requires that you also update these in the
-    associated scripts. See the Troubleshooting section in the end.
+    See the Troubleshooting section in the end.
 	
-	2.2. Click on the "Show Command Line" to see how to start the STLINK GDB server.
+	2.2. Click the **Show Command Line** button.
 	     
     ![DebugConfig3](img/debug_conf_3.png)
 		 
