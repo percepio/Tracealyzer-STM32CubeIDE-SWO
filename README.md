@@ -2,10 +2,11 @@
 
 This example project shows how to use Tracealyzer with the STLINK v3 to stream TraceRecorder data
 with good performance on STM32 microcontrollers. In our experiments, trace data can be streamed
-at over 600 KB/s, and for over 10 minutes without losing a single byte.
+at 600-700 KB/s, and typically for over 10 minutes without losing a single byte.
 
-The project is for the [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board
-but can easily be replicated for other STM32 devices using cores like Arm Cortex-M3, M4, M7, M33 and above.
+The project is for the [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board and uses the integrated STLINK v3 on the board.
+This setup can easily be replicated for other STM32 devices using STLINK debug probes on cores like Arm Cortex-M3, M4, M7, M33 and above.
+The STLINK v2 is also supported in theory, but only supports SWO speeds up to 2 MHz which limits the applicability for RTOS tracing.
 
 [Percepio TraceRecorder](https://github.com/percepio/TraceRecorderSource) supports various popular real-time
 operating systems such as FreeRTOS and Zephyr, as well as bare metal applications. 
