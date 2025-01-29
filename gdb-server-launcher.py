@@ -1,3 +1,5 @@
+import settings
+
 import os
 import socket
 import threading
@@ -7,10 +9,48 @@ import sys
 import subprocess
 import time
 
-HOST = "127.0.0.1"
+# Notes on sudden performance issue, Jan 28/29
+# Tuesday afternoon the Tz streaming started performing worse, with more
+# Missed events, after earlier being very reliable. 
+# At first I suspected the problem to be related to the USB hub, maybe combined
+# with using remote desktop.
+# But the problems persisted wednesday morning in the office, without using the USB hub.
+# Turns out I had made an experimental change in the Debug Configuration
+# and raised the priority of swo-reader.py (start /high). Restoring this to normal priority
+# made it perform like before (stable at full speed at 7 MHz).
+#
+# - You don't need keep Tz closed while streaming. You can have the Live Stream window running,
+#   with perfect(?) reliablity if running with live visualization disabled.
+#
+# - Also found that the streaming works reliably also WITH live visualization.
+#   Decreasing the priority of the Tracealyzer process one step ("below normal") seems to help.
+#
+# - In this setting, using "separate receiver thread" does not seem necessary.
+#   This only causes lag in the live display.
+#
+# - Also evaluated a variant of swo-reader.py that used a queue to speed up the reading loop.
+#   But this had no impact.
+#
+# - For Live Visualization, "Use separate receiver thread" seems to perform worse.
+#   Getting frequent errors with this. Might be that Tz polls the file more often this way,
+#   causing increased conflicts when reading/writing the file at the same time.
+#
+# - SWO speed: 9.5 MHz seems too high. Getting occational missed events.
+#   Try 8.5 (seemed reliable) and see what frequency that is selected in practice.
+#   Higher frequency may cause host-side issues if the data rate is too high, but that
+#   depends on the host computer and can be resolved by closing Tz. Lower SWO frequency
+#   causes slower writes and higher tracing overhead, so this is important to improve
+#   even if you don't need the peak throughput enabled by the higher frequency.
+#
+# - Note: It seems as transmission errors causes a different "pattern" in Missed events, with only 1 or a few missed events.
+#   When the problem is on the host-side, you typically get hundreds of missed events in chunks.
+#   Add this to the troubleshooting notes.
+#
+# TODO: 
+#  - Rename swo-dummyport.py to "run_gdb_server_with_swo_output.py"
+#  - Update the instructions   
 
-ide_connected = False
-ctrl_c_pressed = False
+
 
 # The purpose of this script is to enable Tracealyzer trace streaming 
 # in STM32CubeIDE, using an STLINK v3 connected to the SWO pin, while
@@ -100,7 +140,7 @@ ctrl_c_pressed = False
 #
 # 2. Another reason for such missed events is continuously high event rate causing occational
 # overflows in the (pretty small) SWO data buffer in the STLINK GDB server or STLINK driver.
-# Thay may occur due to interference from other applications or background activity in there
+# That may occur due to interference from other applications or background activity in there
 # operating system. 
 #
 # 2.1. Disable live visualization in Tracealyzer. This may cause higher load on the
@@ -139,18 +179,37 @@ ctrl_c_pressed = False
 # is ready to run.
 #
 
-def sdsdTimestampMillisec64():
-    return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds() * 1000) 
+ide_connected = False
+ctrl_c_pressed = False
+
+def error_log(message):    
+    print("Error: " + message)
+    file1 = open("trace_error.log", "a")  # append mode
+    file1.write("[" + datetime.datetime.now().strftime("%d %b, %Y at %H:%M:%S") +  "] Error in " + str(os.path.basename(__file__)) + ": " + message + "\n")
+    file1.close()
     
 def create_dummy_port_for_ide(gdb_srv):
     global ide_connected        
-    PORT = 61035
-
-    ide_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    IDE_PORT = 0
+    
+    try:
+        IDE_PORT = int(settings.IDE_SWO_PORT)
+    except:
+        error_log("Invalid value for IDE_SWO_PORT")
+        sys.exit(-1)
+    
+    ide_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       
     ide_socket.settimeout(0.2)
     ide_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    ide_socket.bind((HOST, PORT))        
-    print("[swo-dummyport] Waiting for IDE connection.")
+    
+    try:
+        ide_socket.bind(("127.0.0.1", IDE_PORT))
+    except:
+        error_log("Can't bind socket to IDE_SWO_PORT, already in use? (" + settings.IDE_SWO_PORT + ")")
+        sys.exit(-1)
+    
+    print("[gdb-server-launcher] Waiting for connection to IDE_SWO_PORT.")
     ide_socket.listen()
     
     while (ide_connected == False and ctrl_c_pressed == False):
@@ -161,7 +220,7 @@ def create_dummy_port_for_ide(gdb_srv):
             # Timeout is only needed to allow exiting on Ctrl-C
             pass
         
-    print("[swo-dummyport] IDE connected.")
+    print("[gdb-server-launcher] IDE connected to IDE_SWO_PORT.")
     
     bytecount = 0
     last_bytecount = -1
@@ -172,25 +231,10 @@ def create_dummy_port_for_ide(gdb_srv):
     while (ctrl_c_pressed == False):
         retcode = gdb_srv.poll();
         if (retcode is not None):
-            print("[swo-dummyport] GDB server closed, exiting.")
+            print("[gdb-server-launcher] GDB server closed, exiting.")
             break
         else:
-
-            sleep(2.5)
-            
-            last_bytecount = bytecount
-            last_ts = ts
-            ts = time.time()
-            try:                 
-                bytecount = os.path.getsize("swo-data.bin")
-            except:
-                pass
-                
-            if (bytecount > 100):
-                if (bytecount != last_bytecount):  
-                    sampletime = ts - last_ts
-                    print("[swo-reader] Data rate: " + str(int((bytecount-last_bytecount)/(1000*sampletime))) + " KB/s" + 
-                                     ", Data received: " + str(round(bytecount/1000000, 1)) + " MB")                    
+            sleep(3)
 
 def signal_handler(sig, frame):
     global ctrl_c_pressed
@@ -200,7 +244,7 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 # Start the GDB server as a sub process.
-gdb_server_proc = subprocess.Popen(["run_stlink_gdb_server.bat"], shell=False)
+gdb_server_proc = subprocess.Popen(["run_stlink_gdb_server.bat", settings.GDB_SERVER_PORT, settings.GDB_SWO_PORT, settings.GDB_SERVER_PATH, settings.STLINK_PROG_DIR], shell=False)
 
 # Start the dummy port. Will exit when the GDB server exits.
 create_dummy_port_for_ide(gdb_server_proc)

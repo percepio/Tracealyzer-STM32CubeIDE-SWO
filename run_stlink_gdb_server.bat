@@ -1,9 +1,24 @@
-C:\ST\STM32CubeIDE_1.15.0\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.externaltools.stlink-gdb-server.win32_2.1.400.202404281720\tools\bin\ST-LINK_gdbserver.exe ^
---port-number 60230 ^
+@echo off
+
+echo run_stlink_gdb_server.bat
+set GDB_PORT=%1%
+echo   GDB_PORT: %GDB_PORT%
+
+set GDB_SWO_PORT=%2%
+echo   GDB_SWO_PORT: %GDB_SWO_PORT%
+
+set GDB_SERVER_PATH=%3%
+echo   GDB_SERVER_PATH: %GDB_SERVER_PATH%
+
+set STLINK_PROG_DIR=%4%
+echo   STLINK_PROG_DIR: %STLINK_PROG_DIR%
+
+%GDB_SERVER_PATH% ^
+--port-number %GDB_PORT% ^
 --swd ^
 --shared ^
---swo-port 61998 ^
+--swo-port %GDB_SWO_PORT% ^
 --attach ^
 --verbose ^
--cp C:\ST\STM32CubeIDE_1.15.0\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.externaltools.cubeprogrammer.win32_2.1.400.202404281720\tools\bin ^
+-cp %STLINK_PROG_DIR% ^
 -m 0
