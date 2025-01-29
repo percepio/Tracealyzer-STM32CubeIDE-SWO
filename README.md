@@ -193,7 +193,17 @@ Note that this is already done in this example project.
    in frequently executed code, you can try commenting them out.
 
  - Reduce the SWO frequency to ensure there is not transmission errors. For example 6 MHz.
-  
+
+### Busy TCP ports
+
+ If the default port numbers are already in use, the scripts will fail
+ and log an error message in **trace_error.log** in the project root folder.
+ In this case, open **settings.py** and try a different port number for the
+ setting mentioned in the error message.
+ 
+ If changing the port number in settings.py, make sure to read the associated comments.
+ Most have corresponding settings in "the other end", i.e. in the STM32CubeIDE debug
+ configuration or in the Tracealyzer settings, and they need to match.
 
 ## How this solution works
 
