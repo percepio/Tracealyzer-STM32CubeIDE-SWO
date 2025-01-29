@@ -1,16 +1,18 @@
 # Tracealyzer streaming with STLINK v3
 
-This example project shows how to use Tracealyzer in combination with the onboard STLINK v3
-to stream TraceRecorder data with good performance on STM32 microcontrollers. The project
-is for the [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board
+This example project shows how to use Tracealyzer with the STLINK v3 to stream TraceRecorder data
+with good performance on STM32 microcontrollers. In our experiments, trace data can be streamed
+at over 600 KB/s, and for over 10 minutes without losing a single byte.
+
+The project is for the [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board
 but can easily be replicated for other STM32 devices using cores like Arm Cortex-M3, M4, M7, M33 and above.
 
-[Percepio TraceRecorder](https://github.com/percepio/TraceRecorderSource) supports  various popular real-time
+[Percepio TraceRecorder](https://github.com/percepio/TraceRecorderSource) supports various popular real-time
 operating systems such as FreeRTOS and Zephyr, as well as bare metal applications. 
 
 The demo project is a minimal bare-metal application with a simple loop producing TraceRecorder
 events, mainly intended to test the performance and reliablity of the STLINK streaming.
-This is not intended to demonstrate the full capabilities of Tracealyzer. 
+This is not intended to demonstrate the full capabilities of Tracealyzer.
 
 Learn more about Tracealyzer on the [Tracealyzer product page](https://percepio.com/tracealyzer).
 
@@ -142,6 +144,12 @@ Note that this is already done in this example project.
 	  Tracealyzer needs a complete data stream to ensure correct display of the trace.
 	  
 	  ![Live Stream](img/missed_events.png)
+	  
+   6. You can generate higher data rates for stress-testing the solution by reducing the value
+	  of **throttle_delay** in main.c. This can be done within a debug session by pushing the
+	  blue user button on the board, or by halting the debug session and editing the value in
+	  the "Expressions" window. The default value of 5000 results in a data rate of around 160 KB/s,
+	  while setting it to 0 results in maximum data rate.
 
 ## Troubleshooting:
 
@@ -156,19 +164,16 @@ Note that this is already done in this example project.
  events also at lower event rate. It is recommended to select "Limit SWO frequency" and specify
  a lower value, for example 8 MHz.
  
- 2. **Too high host-side system load:** Most likely, this may cause occational overflows in the
- (pretty small) SWO buffer in the STLINK GDB server. For example, if using live visualization
- when the data rate is very high, or if other applications are loading the system.
-
+ 2. **Too high host-side system load:** Depending on the performance and load on your host
+ computer, it seems there can be occational overflows in the (pretty small) SWO buffer in the
+ STLINK GDB server. For example, if using live visualization combined with high data rate,
+ on a somewhat slow computer.
+ 
  If you see a small number of occational Missed Events, i.e. increments of 1 (or a few), 
- while the data rate is relatively low (below 250 KB/s), it is typically a sign of using
- a too high SWO frequency. This is especially likely if using an SWO frequency is above 8 MHz. 
+ while the data rate is low (say, below 250 KB/s), it is probably a transmission error due to using
+ too high SWO frequency. This is especially likely if using an SWO frequency is high, above 8 MHz. 
  In that case, try reducing the SWO frequency in steps of 500 Khz until no Missed Events occur.
  You find this setting in your STM32CubeIDE Debug Configuration on the "Debugger" page ("Limit SWO clock").
-
- Note that minor changes in SWO frequency might not have any effect, as the GDB server
- has fixed valid baud rates and applies the nearest lower valid setting. The actual SWO baud rate
- used by the GDB server can be seen in the GDB server window.
  
  If you see larger increments in the Missed Events, where the counter suddenly jumps by tens or
  hundreds of missed events, it is probably due to the host-side overflow issue. In this case, 
