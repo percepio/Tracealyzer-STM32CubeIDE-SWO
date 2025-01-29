@@ -145,52 +145,52 @@ Note that this is already done in this example project.
 
 ## Troubleshooting:
 
- The main risk is "Missed events", i.e. data loss in the transfer. Missed events are detected
- and reported by Tracealyzer, and typically only occurs if streaming at over 500 KB/s for
- several minutes when using this approach. 
-
- In case you see Missed Events, make sure to resolve such issues before studying the traces in
- Tracealyzer, otherwise the displayed data might not be correct.
+### Missed Events
+ Missed events are detected and reported by Tracealyzer. In case you see Missed Events, make sure
+ to resolve such issues before studying the traces in Tracealyzer, otherwise the displayed data might not be correct.
 
  There seem to be two main reasons for missed events when using this approach:
  
- 1. Too high SWO frequency. 7-9 MHz seems reliable, but in our experiments STM32CubeIDE
+ 1. **Too high SWO frequency:** 7-9 MHz seems reliable, but in our experiments STM32CubeIDE
  selected 12 MHz by default (core clock divided by 10) which resulted in occational missed
  events also at lower event rate. It is recommended to select "Limit SWO frequency" and specify
  a lower value, for example 8 MHz.
  
- 2. Too high host-side system load, causing occational overflows in the (pretty small) SWO 
- data buffer in the STLINK GDB server or STLINK driver. That may occur due to interference from
- other applications or background activity in the operating system that delays reading out the SWO data.
+ 2. **Too high host-side system load:** Most likely, this may cause occational overflows in the
+ (pretty small) SWO buffer in the STLINK GDB server. For example, if using live visualization
+ when the data rate is very high, or if other applications are loading the system.
 
  If you see a small number of occational Missed Events, i.e. increments of 1 (or a few), 
  while the data rate is relatively low (below 250 KB/s), it is typically a sign of using
  a too high SWO frequency. This is especially likely if using an SWO frequency is above 8 MHz. 
  In that case, try reducing the SWO frequency in steps of 500 Khz until no Missed Events occur.
- You find this setting in your STM32CubeIDE Debug Configuration on the "Debugger" page.
- It is called "Limit SWO clock". 7-9 MHz has been reliable in our experiments.
+ You find this setting in your STM32CubeIDE Debug Configuration on the "Debugger" page ("Limit SWO clock").
+
  Note that minor changes in SWO frequency might not have any effect, as the GDB server
- has fixed valid baud rates and applies the nearest lower valid setting. This appears to
- be in steps of 500 KHz or so. The actual SWO baud rate used can be seen in the GDB server
- window. For example, if setting 7000 KHz results in "baudrate 6620000Hz".
+ has fixed valid baud rates and applies the nearest lower valid setting. The actual SWO baud rate
+ used by the GDB server can be seen in the GDB server window.
  
- If you see large increments in the Missed Events, where the counter suddenly jumps by tens or
+ If you see larger increments in the Missed Events, where the counter suddenly jumps by tens or
  hundreds of missed events, it is probably due to the host-side overflow issue. In this case, 
- make sure to disable live visualization in Tracealyzer. 
- This is done by selecting **Open Live Stream Tool** in the **Trace** menu and enable the checkbox
+ make sure to disable live visualization in Tracealyzer. This is done by selecting **Open Live Stream Tool** in the **Trace** menu and enable the checkbox
  **Disable Live Visualization** before connecting and starting the session.
  
- This is usually what has the largest effect. But if not sufficient, try the following:
+ Disabling Live Visualization is usually what has the largest effect.
+ But you can also try the following:
  
+ - Close any open application that isn't needed at the moment.
+ 
+ - Reduce the scheduling priority of the Tracealyzer application.
+
  - Reduce the data rate from TraceRecorder using the settings in trcConfig.h.
    For example, tracing of OS Tick events is usually redundant and can be disabled.
    Also, if you added custom events like tracing interrupt handlers or "User Events"
    in frequently executed code, you can try commenting them out.
 
- - Closing any open application that isn't needed at the moment.
- 
+ - Reduce the SWO frequency to ensure there is not transmission errors. For example 6 MHz.
+  
 
-## How it works:
+## How this solution works
 
  The SWO data is provided by the STLINK GDB server on a TCP port, but
  STM32CubeIDE will normally connect to this port and consume all data.
