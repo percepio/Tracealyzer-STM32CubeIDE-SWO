@@ -1,69 +1,91 @@
 # Tracealyzer streaming with STLINK v3
 
-This example project shows how to use Tracealyzer with the STLINK v3 to stream TraceRecorder data
-with good performance on STM32 microcontrollers. In our experiments, trace data can be streamed
-at 600-700 KB/s, and typically for over 10 minutes without losing a single byte.
+This example project shows how to use [Percepio Tracealyzer](https://percepio.com/tracealyzer)
+together with the STLINK v3 to stream [TraceRecorder](https://github.com/percepio/TraceRecorderSource) data
+with good performance on STM32 microcontrollers. In our experiments, the STLINK v3 has allowed for
+reliable performance at 8 MHz SWO clock speed, enabling data rates close to 800 KB/s.
 
-The project is for the [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board and uses the integrated STLINK v3 on the board.
+TraceRecorder supports tracing of various real-time operating systems such as FreeRTOS,
+ThreadX and Zephyr, as well as bare metal applications.
+
+This demo project focuses on the STLINK streaming performance and is not intended to demonstrate
+the full capabilities of Tracealyzer. Check the [Tracealyzer product page](https://percepio.com/tracealyzer) for more information.
+The demo project is for the [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board and uses the integrated STLINK v3 on the board.
 This setup can easily be replicated for other STM32 devices using STLINK debug probes on cores like Arm Cortex-M3, M4, M7, M33 and above.
 The STLINK v2 is also supported in theory, but only supports SWO speeds up to 2 MHz which limits the applicability for RTOS tracing.
 
-[Percepio TraceRecorder](https://github.com/percepio/TraceRecorderSource) supports various popular real-time
-operating systems such as FreeRTOS and Zephyr, as well as bare metal applications. 
+If you have questions about this solution, [contact Percepio here](https://percepio.com/contact-us/).
 
-The demo project is a minimal bare-metal application with a simple loop producing TraceRecorder
-events, mainly intended to test the performance and reliablity of the STLINK streaming.
-This is not intended to demonstrate the full capabilities of Tracealyzer.
+## Prerequisites
 
-Learn more about Tracealyzer on the [Tracealyzer product page](https://percepio.com/tracealyzer).
+- Percepio Tracealyzer, [available for evaluation here](https://percepio.com/tracealyzer/download-tracealyzer/).
+  Tracealyzer supports Windows and Linux, but not yet macOS.
+- STM32CubeIDE
+- Python
+- An STM32 board with an STLINK v3 debugger, for example [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html).
 
 ## Setup
 
-1. Integrate TraceRecorder and select the ARM_ITM streamport, as decribed on the
-[Tracealyzer Getting Started](https://percepio.com/tracealyzer/gettingstarted), in the guide matching your RTOS.
-Note that this is already done in this example project.
-
+1. TraceRecorder is already integrated in this demo project, but to replicate the setup on your own project,
+   follow the guide on [Tracealyzer Getting Started](https://percepio.com/tracealyzer/gettingstarted) matching your RTOS.
+   Use the **ARM_ITM** streamport module. 
+   
+   There is only one-way communication in this setup, so you need to start the tracing using xTraceEnable(TRC_START).
+   Starting and stopping TraceRecorder from the Tracealyzer application is normally possible, but not implemented here.
+   <p>&nbsp;</p>
+   
 2. Open **Debug Configurations** in STM32CubeIDE and create a new entry.
    
    Set a suitable name, for example "Debug with Tracealyzer streaming".
+   <p>&nbsp;</p>
    
    2.1. On the **Debugger** page, enter the following configuration:
    
-   ![Debug Configuration](img/debug_conf_1.png)
+   <img src="img/debug_conf_1.png" alt="Debug Configuration, Debugger page" width=700>
    
-    - Connect to remote GDB server: Checked
-    - Host name or IP address: localhost
-    - Port number: 60230
+   Under **GDB Connection Settings**
+   - Connect to remote GDB server: Checked
+   - Host name or IP address: localhost
+   - Port number: 60230
+   
+   <p></p>
+      
+   Under **Serial Wire Viewer (SWV)**
+   - Serial Wire Viewer: Enabled
+   - Core clock: (your core clock speed)
+   - Limit SWO clock: Checked
+   - Maximum SWO clock (KHz): 8000
+   - Port number: 61035
 
-    - Serial Wire Viewer: Enabled
-    - Core clock: (your core clock speed)
-    - Limit SWO clock: Checked
-    - Maximum SWO clock (KHz): 8000
-    - Port number: 61035
-	
-	**Note:** The port numbers are the defaults, but can changed if already in use. 
-    See the Troubleshooting section in the end.
-	
-	2.2. Click the **Show Command Line** button.
+   <p></p>
+   
+   Note: The default port numbers suggested above might not be availble on all computers, i.e. if used by other applications.
+   Such errors will be logged in **trace_error.log**. In that case, the port numbers can be changed in **settings.py**.
+   See the Troubleshooting section in the end.
+   <p>&nbsp;</p>
+   
+   2.2. Click the **Show Command Line** button.
 	     
-    ![DebugConfig3](img/debug_conf_3.png)
+   ![DebugConfig3](img/debug_conf_3.png)
 		 
-    Copy the path to the STLINK GDB server. Open **settings.py** and update **GDB_SERVER_PATH**.
-	Make sure to keep the special python formatting (GDB_SERVER_PATH = r'path').
+   Copy the path to the STLINK GDB server. Open **settings.py** and update **GDB_SERVER_PATH**.
+   Make sure to keep the special python formatting (GDB_SERVER_PATH = r'path').
 		 
-    ![DebugConfig4](img/debug_conf_4.png)
+   ![DebugConfig4](img/debug_conf_4.png)
 		 
-    Also copy the second path (the STLINK programmer tool directory) and update **STLINK_PROG_DIR** in settings.py.
-	Save your updated settings.py.
-	   
-    2.3. On the **Startup** page, add the following in the **Run Commands** field.
+   Also copy the second path (the STLINK programmer tool directory) and update **STLINK_PROG_DIR** in settings.py.
+   Save your updated settings.py.
+   <p>&nbsp;</p>
+  
+   2.3. On the **Startup** page, add the following in the **Run Commands** field.
     
-    - On Windows: shell start /b python swo-reader-tcp.py
+   - On Windows: shell start /b python swo-reader-tcp.py
 	
-    - On Linux: TBD
+   - On Linux: TBD
 		 
-    ![Debug Configuration](img/debug_conf_2.png)     
-
+   <img src="img/debug_conf_2.png" alt="Debug Configuration, Startup page" width=700>  
+   <p>&nbsp;</p>
+   
 3. Next step is to add the GDB server script as an "External Tool" in STM32CubeIDE.
    
    - Locate the "External Tools" dropdown menu and select External Tools Configuration.
@@ -72,7 +94,7 @@ Note that this is already done in this example project.
 	 
    - Set a suitable name, e.g. "GDB server with trace output".	 
    
-     ![External Tools Configuration](img/ext_tools2.png)
+     <img src="img/ext_tools2.png" alt="External Tools Configuration 2" width=900>  
 	    
    - Under "Location", select "Browse File System" and select
      the **stm32cubeide_external_tool_start_gdb_server** script, 
@@ -81,6 +103,7 @@ Note that this is already done in this example project.
    - Under "Working Directory", select your project root folder.
    
    - Save and close.
+   <p>&nbsp;</p>
    
 4. To test the new debugging setup, two steps are needed with this approach:
  
@@ -88,41 +111,53 @@ Note that this is already done in this example project.
   
    - Start your new Debug Configuration using the **Debug button**. Make sure to select the right Debug Configuration.
      Clicking the Debug button will launch the latest used configuration.
-	 
-	 ![Debug](img/debug.png)
-	 
-	 Make sure your debugging works as expected, i.e. stepping, breakpoints and so. 
-	 The GDB server window can be minimized, but closing it will kill your debug session.
 	
-  
+     <img src="img/debug.png" alt="Debugging" width=900>  
+     <p></p>
+   
+   Make sure your debugging works as expected, i.e. stepping, breakpoints and so. 
+   The GDB server window can be minimized, but closing it will kill your debug session.
+   <p>&nbsp;</p>
+   
 5. Inside your debug session, open **SWV Trace Log** (see Show View -> SWV).
    
    ![SWV Trace Log](img/swv1.png)
-  
+   
+   <p>&nbsp;</p>
+
 6. Click on the **Configure trace** button.
 
    Enable ITM port 1. Disable everything else. 
    
    Click OK.
+      
+   <img src="img/conf_trace.png" alt="Configure Trace" width=700>
    
-   ![Configure Trace view](img/conf_trace.png)
+   <p>&nbsp;</p>
 
 7. In **SWV Trace Log**, use the **Start Trace** button to enable trace output on your device.
    
    ![SWV Trace Log](img/swv2.png)
    
+   <p>&nbsp;</p>
+   
 8. Close the debug session. The settings are stored in your project.
 
+   <p>&nbsp;</p>
+   
 9. Open Tracealyzer and go to **File** -> **Settings**.
    - Select **PSF Streaming Settings**
    
-   ![SWV Trace Log](img/psf_settings.png)
+     ![SWV Trace Log](img/psf_settings.png)
    
    - Target Connection: TCP
    - TCP address: 127.0.0.1 (your local computer)
    - Port: 5000
    - Data is ITM encoded: Checked
    
+   Leave the other options unchecked/empty. Press OK.
+   
+   <p>&nbsp;</p>
    
 ## Usage
 
@@ -132,26 +167,42 @@ Note that this is already done in this example project.
       But let it remain halted for now.
       
    3. In Tracealyzer, open the **Trace** menu and select **Open Live Stream Tool**.
-      Decide if you want Live Visualization using the checkbox.
-      Then click **Connect** and **Start Session**.
+      
+	  Check the "Disable Live Visualization" checkbox if you want to record long traces, i.e. for more than a few minutes.
+	  This reduces the risk of Missed Events (see Troubleshooting below).
+      
+	  Then click **Connect** and **Start Session**.
 	  
-	  ![Live Stream](img/live_stream.png)
+	  <img src="img/live_stream.png" alt="Live stream window" width=700>
+	  <p></p>
 	        
-   4. In STM32CubeIDE, now start the execution.
-			
-   5. In Tracealyzer, check the Live Stream window for a notice about "Missed events".
+   4. Start the target system in STM32CubeIDE. When Tracealyzer is recording data, 
+      check the Live Stream window for a notice about "Missed events".
       If this notice shows up, follow the advice in the "Troubleshooting" section below.
 	  Tracealyzer needs a complete data stream to ensure correct display of the trace.
 	  
 	  ![Live Stream](img/missed_events.png)
 	  
-   6. You can generate higher data rates for stress-testing the solution by reducing the value
-	  of **throttle_delay** in main.c. This can be done within a debug session by pushing the
-	  blue user button on the board, or by halting the debug session and editing the value in
-	  the "Expressions" window. The default value of 5000 results in a data rate of around 160 KB/s,
-	  while setting it to 0 results in maximum data rate.
+   5. Stop the trace session to load the trace data into Tracealyzer and enable all views.
+      
+	  If the trace is very large, you will be asked to open it in the Trace Preview. This opens quickly
+	  and lets you select a smaller section of relevance to limit the amount of loaded data.
+	  
+   Note: You can generate higher data rates for stress-testing the solution by reducing the value
+   of **throttle_delay** in main.c. Setting it to 0 results in maximum data rate.
 
 ## Troubleshooting:
+
+### Busy TCP ports
+
+ If the default port numbers are already in use, the scripts will fail
+ and log an error message in **trace_error.log** in the project root folder.
+ In this case, open **settings.py** and try a different port number for the
+ setting mentioned in the error message.
+ 
+ If changing the port number in settings.py, make sure to read the associated comments.
+ Most have corresponding settings in "the other end", i.e. in the STM32CubeIDE debug
+ configuration or in the Tracealyzer settings, and they need to match.
 
 ### Missed Events
  Missed events are detected and reported by Tracealyzer. In case you see Missed Events, make sure
@@ -177,33 +228,25 @@ Note that this is already done in this example project.
  
  If you see larger increments in the Missed Events, where the counter suddenly jumps by tens or
  hundreds of missed events, it is probably due to the host-side overflow issue. In this case, 
- make sure to disable live visualization in Tracealyzer. This is done by selecting **Open Live Stream Tool** in the **Trace** menu and enable the checkbox
+ it is recommended to disable live visualization in Tracealyzer. Select **Open Live Stream Tool** in the **Trace** menu and enable the checkbox
  **Disable Live Visualization** before connecting and starting the session.
  
- Disabling Live Visualization is usually what has the largest effect.
- But you can also try the following:
+ Disabling Live Visualization is usually sufficient, but you can also try the following:
  
- - Close any open application that isn't needed at the moment.
- 
- - Reduce the scheduling priority of the Tracealyzer application.
+ - Close any other open applications that isn't needed at the moment.
+
+ - Reduce the scheduling priority of the Tracealyzer application. This can allow for Live Visualization without missed events also at high data rates.
 
  - Reduce the data rate from TraceRecorder using the settings in trcConfig.h.
    For example, tracing of OS Tick events is usually redundant and can be disabled.
    Also, if you added custom events like tracing interrupt handlers or "User Events"
    in frequently executed code, you can try commenting them out.
 
- - Reduce the SWO frequency to ensure there is not transmission errors. For example 6 MHz.
-
-### Busy TCP ports
-
- If the default port numbers are already in use, the scripts will fail
- and log an error message in **trace_error.log** in the project root folder.
- In this case, open **settings.py** and try a different port number for the
- setting mentioned in the error message.
+ - Reduce the SWO frequency to ensure there is no transmission errors.
  
- If changing the port number in settings.py, make sure to read the associated comments.
- Most have corresponding settings in "the other end", i.e. in the STM32CubeIDE debug
- configuration or in the Tracealyzer settings, and they need to match.
+ - Try using a faster computer.
+ 
+ - Also see the troubleshooting guide in the Tracealyzer User Manual (Help menu).
 
 ## How this solution works
 
@@ -220,5 +263,9 @@ Note that this is already done in this example project.
  SWO port and reads the data into a queue. Another thread reads the queue
  and send the data to Tracealyzer using a different TCP socket. This made
  the solution a lot more reliable.
+
+## Questions?
+
+ If you have questions about this solution, [contact Percepio here](https://percepio.com/contact-us/).
 
 Copyright (c) Percepio AB.
