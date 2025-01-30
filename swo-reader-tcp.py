@@ -91,7 +91,8 @@ while running:
         try:
             tz_client_socket.send(qdata)            
         except Exception as e:
-            error_log(str(e))
+            # Typically "disconnect" exceptions, not worth logging in trace_error.log.
+            print(e)
             break
             
     except KeyboardInterrupt:
