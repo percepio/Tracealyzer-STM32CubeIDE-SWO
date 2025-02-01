@@ -79,9 +79,11 @@ If you have questions about this solution, [contact Percepio here](https://perce
   
    2.3. On the **Startup** page, add the following in the **Run Commands** field.
     
-   - On Windows: shell start /b python swo-reader-tcp.py
+   - On Windows: "shell start /b python swo-reader-tcp.py"
 	
-   - On Linux: TBD
+   - On Linux: "python3 swo-reader-tcp.py &"
+   
+   (Don't include the quotation marks!)
 		 
    <img src="img/debug_conf_2.png" alt="Debug Configuration, Startup page" width=700>  
    <p>&nbsp;</p>
@@ -96,10 +98,12 @@ If you have questions about this solution, [contact Percepio here](https://perce
    
      <img src="img/ext_tools2.png" alt="External Tools Configuration 2" width=900>  
 	    
-   - Under "Location", select "Browse File System" and select
-     the **stm32cubeide_external_tool_start_gdb_server** script, 
-	 the .bat variant if using Windows or the .sh variant if using Linux.
+   - Under "Location", select "Browse File System" and select the right script file:
    
+     If using Windows: **stm32cubeide_external_tool_start_gdb_server.bat**
+   
+     If using Linux: **stm32cubeide_external_tool_start_gdb_server.sh**
+	 
    - Under "Working Directory", select your project root folder.
    
    - On the "Build" page, you may disable "Build before launch".
@@ -111,8 +115,9 @@ If you have questions about this solution, [contact Percepio here](https://perce
  
    - Start the **GDB server**, using your new "external tool" shortcut.
   
-   - Start your new Debug Configuration using the **Debug button**. Make sure to select the right Debug Configuration.
-     Clicking the Debug button will launch the latest used configuration.
+   - Start your new Debug Configuration using the **Debug button**. 
+     The first time, make sure to launch the right Debug Configuration by selecting it from the dropdown menu.
+	 Clicking the Debug button will launch the latest used configuration.
 	
      <img src="img/debug.png" alt="Debugging" width=900>  
      <p></p>
