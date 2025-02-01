@@ -102,6 +102,8 @@ If you have questions about this solution, [contact Percepio here](https://perce
    
    - Under "Working Directory", select your project root folder.
    
+   - On the "Build" page, you may disable "Build before launch".
+   
    - Save and close.
    <p>&nbsp;</p>
    
@@ -161,8 +163,8 @@ If you have questions about this solution, [contact Percepio here](https://perce
    
 ## Usage
 
-   1. Start the GDB server using the "External Tool" shortcut.
-      	  
+   1. Start the GDB server using the "External Tool" shortcut. This opens a terminal window. Avoid closing this window manually.
+         	  
    2. Click the Debug button to launch your debug configuration.
       But let it remain halted for now.
       
@@ -193,16 +195,22 @@ If you have questions about this solution, [contact Percepio here](https://perce
 
 ## Troubleshooting:
 
-### Busy TCP ports
+### GDB Server Issues
 
- If the default port numbers are already in use, the scripts will fail
- and log an error message in **trace_error.log** in the project root folder.
- In this case, open **settings.py** and try a different port number for the
- setting mentioned in the error message.
+ If the terminal window closes right away, it is probably because another instance is still open.
+ Close all previous windows and try again.
+   
+ If you see an error like "Error in initializing ST-LINK device. Reason: ST-LINK DLL error."
+ this might be because the previous GDB server instance was closed down abruptly, e.g. manually closing the terminal window.
+ In this case, wait a minute and try again.
+
+ If you have other issues, check for a log file named **trace_error.log** and inspect
+ the error message there. 
  
- If changing the port number in settings.py, make sure to read the associated comments.
- Most have corresponding settings in "the other end", i.e. in the STM32CubeIDE debug
- configuration or in the Tracealyzer settings, and they need to match.
+ It might be that some of the default port numbers are already in use. The TCP socket "bind" operation then fails, which is logged to trace_error.log.
+ In this case, open **settings.py** and try a different port number for the port setting mentioned in the error message.
+ Make sure to read the associated comments for the port settings. Most have corresponding settings in "the other end" that also needs to be updated, i.e. in the STM32CubeIDE debug
+ configuration or in the Tracealyzer settings.
 
 ### Missed Events
  Missed events are detected and reported by Tracealyzer. In case you see Missed Events, make sure

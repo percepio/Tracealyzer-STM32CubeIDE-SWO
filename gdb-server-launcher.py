@@ -8,6 +8,7 @@ import signal
 import sys
 import subprocess
 import time
+from sys import platform
 
 ide_connected = False
 ctrl_c_pressed = False
@@ -74,7 +75,26 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 # Start the GDB server as a sub process.
-gdb_server_proc = subprocess.Popen(["run_stlink_gdb_server.bat", settings.GDB_SERVER_PORT, settings.GDB_SWO_PORT, settings.GDB_SERVER_PATH, settings.STLINK_PROG_DIR], shell=False)
+gdb_server_proc = None
+launch_script = ""
+
+if platform == "linux" or platform == "linux2":
+    launch_script = "./run_stlink_gdb_server.sh"
+elif platform == "win32":
+    launch_script = "run_stlink_gdb_server.bat"
+elif platform == "darwin":
+    print("macOS not supported.")
+    sleep(1.5)
+    exit()
+
+gdb_server_proc = subprocess.Popen(
+    [launch_script,
+     settings.GDB_SERVER_PORT, 
+     settings.GDB_SWO_PORT, 
+     settings.GDB_SERVER_PATH, 
+     settings.STLINK_PROG_DIR], 
+    shell=False)
 
 # Start the dummy port. Will exit when the GDB server exits.
 create_dummy_port_for_ide(gdb_server_proc)
+

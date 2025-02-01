@@ -61,14 +61,12 @@ int main(void)
         xTraceTaskReady(TASK_MAIN);
     	xTraceTaskSwitch((void*)TASK_MAIN, 0);
 
-    	/* Log the "trottle delay" as a user event */
-    	xTracePrintF(chn, "%d", throttle_delay);
+    	/* The loop below represents idle time... */
+        xTraceTaskSwitch((void*)TASK_IDLE, 0);
 
     	/* The throttle delay, allows for adjusting the data rate. */
     	for (volatile int counter=0; counter<throttle_delay; counter++);
 
-    	/* Not needed when using an RTOS... */
-        xTraceTaskSwitch((void*)TASK_IDLE, 0);
     }
 
     return 0;
