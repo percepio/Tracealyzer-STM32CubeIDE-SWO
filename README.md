@@ -1,8 +1,8 @@
 # Tracealyzer streaming with STLINK v3
 
 This example project shows how to use [Percepio Tracealyzer](https://percepio.com/tracealyzer)
-together with the STLINK v3 to stream [TraceRecorder](https://github.com/percepio/TraceRecorderSource) data
-with good performance on STM32 microcontrollers. In our experiments, the STLINK v3 has allowed for
+together with STM32CubeIDE and STLINK v3 to stream [TraceRecorder](https://github.com/percepio/TraceRecorderSource) 
+data with good performance on STM32 microcontrollers. In our experiments, the STLINK v3 has allowed for
 reliable performance at 8 MHz SWO clock speed, enabling data rates close to 800 KB/s.
 
 TraceRecorder supports tracing of various real-time operating systems such as FreeRTOS,
