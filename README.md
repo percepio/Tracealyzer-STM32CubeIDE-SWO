@@ -5,7 +5,7 @@ together with STM32CubeIDE and STLINK v3 to stream [TraceRecorder](https://githu
 data with good performance on STM32 microcontrollers. In our experiments, the STLINK v3 has allowed for
 reliable performance at 8 MHz SWO clock speed, enabling data rates close to 800 KB/s.
 
-TraceRecorder supports tracing of various real-time operating systems such as FreeRTOS,
+Percepio TraceRecorder is the target-side library for Tracealyzer and supports tracing of various real-time operating systems such as FreeRTOS,
 ThreadX and Zephyr, as well as bare metal applications.
 
 This demo project focuses on the STLINK streaming performance and is not intended to demonstrate
