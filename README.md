@@ -10,8 +10,10 @@ ThreadX and Zephyr, as well as bare metal applications.
 
 This demo project focuses on the STLINK streaming performance and is not intended to demonstrate
 the full capabilities of Tracealyzer. Check the [Tracealyzer product page](https://percepio.com/tracealyzer) for more information.
-The demo project is for the [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board and uses the integrated STLINK v3 on the board.
-However, this trace streaming setup can also be used for other STM32 devices assuming the ITM unit and SWO output is included. This is typically the case on STM32 boards based on Arm Cortex-M3, M4, M7, M33 cores or above. ITM is typically not supported on Arm Cortex-M0/M0+ devices. The STLINK v2 is also supported in theory, but only supports SWO speeds up to 2 MHz which limits the applicability for RTOS tracing.
+
+The demo project targets the [B-U585I-IOT02A](https://www.st.com/en/evaluation-tools/b-u585i-iot02a.html) board. However, the setup can be used for other STM32 devices as well, assuming the ITM unit and SWO output is included. This is typically the case on STM32 boards based on Arm Cortex-M3, M4, M7, M33 cores or above. ITM is usually not supported on Arm Cortex-M0/M0+ devices. 
+
+The older STLINK v2 is also supported by this solution, but this only supports up to 2 MHz SWO speed, which is usually not sufficient for RTOS tracing.
 
 If you have questions about this solution, [contact Percepio here](https://percepio.com/contact-us/).
 
