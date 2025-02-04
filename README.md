@@ -1,5 +1,7 @@
 # Tracealyzer streaming with STLINK v3
 
+<a href="https://youtu.be/3g2kV2eTKwk" target="_blank"><img src="img/video-link.png" alt="Youtube video tutorial"></a>
+
 This example project shows how to use [Percepio Tracealyzer](https://percepio.com/tracealyzer)
 together with STM32CubeIDE and STLINK v3 to stream [TraceRecorder](https://github.com/percepio/TraceRecorderSource) 
 data with good performance on STM32 microcontrollers. In our experiments, the STLINK v3 has allowed for
