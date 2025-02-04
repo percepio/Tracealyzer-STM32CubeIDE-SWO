@@ -72,7 +72,7 @@ slightly more detailed.
 
    <p></p>
    
-   Note: The default port numbers suggested above might not be availble on all computers, i.e. if used by other applications.
+   Note: The default port numbers suggested above might not be available on all computers, i.e. if used by other applications.
    Such errors will be logged in **trace_error.log**. In that case, the port numbers can be changed in **settings.py**.
    See the Troubleshooting section in the end.
    <p>&nbsp;</p>
@@ -237,19 +237,19 @@ slightly more detailed.
  There seem to be two main reasons for missed events when using this approach:
  
  1. **Too high SWO frequency:** 7-9 MHz seems reliable, but in our experiments STM32CubeIDE
- selected 12 MHz by default (core clock divided by 10) which resulted in occational missed
+ selected 12 MHz by default (core clock divided by 10) which resulted in occasional missed
  events also at lower event rate. It is recommended to select "Limit SWO frequency" and specify
  a lower value, for example 8 MHz.
  
  2. **Too high host-side system load:** Depending on the performance and load on your host
- computer, it seems there can be occational overflows in the (pretty small) SWO buffer in the
+ computer, it seems there can be occasional overflows in the (pretty small) SWO buffer in the
  STLINK GDB server. For example, if using live visualization combined with high data rate,
  on a somewhat slow computer.
  
- If you see a small number of occational Missed Events, i.e. increments of 1 (or a few), 
+ If you see a small number of sporadic Missed Events, i.e. increments of 1 (or a few), 
  while the data rate is low (say, below 250 KB/s), it is probably a transmission error due to using
  too high SWO frequency. This is especially likely if using an SWO frequency is high, above 8 MHz. 
- In that case, try reducing the SWO frequency in steps of 500 Khz until no Missed Events occur.
+ In that case, try reducing the SWO frequency in steps of 500 KHz until no Missed Events occur.
  You find this setting in your STM32CubeIDE Debug Configuration on the "Debugger" page ("Limit SWO clock").
  
  If you see larger increments in the Missed Events, where the counter suddenly jumps by tens or
