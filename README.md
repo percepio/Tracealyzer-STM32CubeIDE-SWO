@@ -1,6 +1,7 @@
 # Tracealyzer streaming with STLINK v3
 
-<a href="https://youtu.be/3g2kV2eTKwk" target="_blank"><img src="img/video-link.png" alt="Youtube video tutorial"></a>
+<a href="img/tracealyzer.png"><img src="img/tracealyzer.png" alt="Debugging" width=700></a>
+<p></p>
 
 This example project shows how to use [Percepio Tracealyzer](https://percepio.com/tracealyzer)
 together with STM32CubeIDE and STLINK v3 to stream [TraceRecorder](https://github.com/percepio/TraceRecorderSource) 
@@ -18,6 +19,15 @@ The demo project targets the [B-U585I-IOT02A](https://www.st.com/en/evaluation-t
 The older STLINK v2 is also supported by this solution, but this only supports up to 2 MHz SWO speed, which is usually not sufficient for RTOS tracing.
 
 If you have questions about this solution, [contact Percepio here](https://percepio.com/contact-us/).
+
+## Video Tutorial
+
+The instructions on this page are also available as a [Youtube video](https://youtu.be/3g2kV2eTKwk).
+It is recommended to open this in a separate window and also read the instructions below, that are 
+slightly more detailed.
+
+<a href="https://youtu.be/3g2kV2eTKwk" target="_blank"><img src="img/video-link.png" alt="Youtube video tutorial"></a>
+
 
 ## Prerequisites
 
