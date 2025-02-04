@@ -99,17 +99,17 @@ If you have questions about this solution, [contact Percepio here](https://perce
    
      <img src="img/ext_tools2.png" alt="External Tools Configuration 2" width=900>  
 	    
-   - Under "Location", select "Browse File System" and select the right script file:
+   - Under "Location", select "Browse Workspace" and select the right script file:
    
      If using Windows: **stm32cubeide_external_tool_start_gdb_server.bat**
    
-     If using Linux: **stm32cubeide_external_tool_start_gdb_server.sh**
+     If using Linux: **stm32cubeide_external_tool_start_gdb_server.sh**     
 	 
    - Under "Working Directory", select your project root folder.
    
    - On the "Build" page, you may disable "Build before launch".
    
-   - Save and close.
+   - Apply and close.
    <p>&nbsp;</p>
    
 4. To test the new debugging setup, two steps are needed with this approach:
