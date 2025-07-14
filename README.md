@@ -147,7 +147,7 @@ slightly more detailed.
 
 6. Click on the **Configure trace** button.
 
-   Enable ITM port 1. Disable everything else. 
+   Enable ITM port 1. Clear all other check boxes.
    
    Click OK.
       
