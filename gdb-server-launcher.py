@@ -92,7 +92,8 @@ gdb_server_proc = subprocess.Popen(
      settings.GDB_SERVER_PORT, 
      settings.GDB_SWO_PORT, 
      settings.GDB_SERVER_PATH, 
-     settings.STLINK_PROG_DIR], 
+     settings.STLINK_PROG_DIR,
+     settings.APID], 
     shell=False)
 
 # Start the dummy port. Will exit when the GDB server exits.
