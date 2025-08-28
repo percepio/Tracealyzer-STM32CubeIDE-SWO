@@ -20,15 +20,6 @@ The older STLINK v2 is also supported by this solution, but this only supports u
 
 If you have questions about this solution, [contact Percepio here](https://percepio.com/contact-us/).
 
-## Video Tutorial
-
-The instructions on this page are also available as a [Youtube video](https://youtu.be/3g2kV2eTKwk).
-It is recommended to open this in a separate window and also read the instructions below, that are 
-slightly more detailed.
-
-<a href="https://youtu.be/3g2kV2eTKwk" target="_blank"><img src="img/video-link.png" alt="Youtube video tutorial"></a>
-
-
 ## Prerequisites
 
 - Percepio Tracealyzer, [available for evaluation here](https://percepio.com/tracealyzer/download-tracealyzer/).
@@ -147,7 +138,7 @@ slightly more detailed.
 
 6. Click on the **Configure trace** button.
 
-   Enable ITM port 1. Disable everything else. 
+   Enable ITM port 1. Make sure to **disable everything else**, for example timestamps and PC sampling. The ITM-generated timestamps are not used by Tracealyzer and known to confuse Tracealyzer v4.10.3 or earlier.
    
    Click OK.
       
@@ -210,6 +201,14 @@ slightly more detailed.
 	  
    Note: You can generate higher data rates for stress-testing the solution by reducing the value
    of **throttle_delay** in main.c. Setting it to 0 results in maximum data rate.
+
+## Video Tutorial
+
+The instructions above are also available as a [Youtube video](https://youtu.be/3g2kV2eTKwk).
+However, it is recommended to also read the instructions above, that are a bit more detailed.
+
+<a href="https://youtu.be/3g2kV2eTKwk" target="_blank"><img src="img/video-link.png" alt="Youtube video tutorial"></a>
+
 
 ## Troubleshooting:
 
