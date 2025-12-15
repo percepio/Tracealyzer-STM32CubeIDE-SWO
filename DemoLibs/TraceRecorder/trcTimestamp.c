@@ -1,6 +1,6 @@
 /*
-* Trace Recorder for Tracealyzer v4.10.1
-* Copyright 2023 Percepio AB
+* Trace Recorder for Tracealyzer v989.878.767
+* Copyright 2025 Percepio AB
 * www.percepio.com
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -10,7 +10,7 @@
 
 #include <trcRecorder.h>
 
-#if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
+#if (TRC_USE_TRACEALYZER_RECORDER == 1)
 
 TraceTimestampData_t *pxTraceTimestamp TRC_CFG_RECORDER_DATA_ATTRIBUTE;
 
@@ -36,7 +36,7 @@ traceResult xTraceTimestampInitialize(TraceTimestampData_t *pxBuffer)
 	pxTraceTimestamp->latestTimestamp = pxTraceTimestamp->period - 1u;
 #endif
 
-	xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_TIMESTAMP);
+	(void)xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_TIMESTAMP);
 
 	return TRC_SUCCESS;
 }

@@ -1,12 +1,11 @@
 /*
- * Trace Recorder for Tracealyzer v4.7.0
- * Copyright 2023 Percepio AB
+ * Trace Recorder for Tracealyzer v989.878.767
+ * Copyright 2025 Percepio AB
  * www.percepio.com
  *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Main configuration parameters for the trace recorder library.
- * More settings can be found in trcStreamingConfig.h and trcSnapshotConfig.h.
  */
 
 #ifndef TRC_CONFIG_H
@@ -23,6 +22,7 @@ extern "C" {
  * required at least for the ARM Cortex-M port, that uses the ARM CMSIS API.
  * Try that in case of build problems. Otherwise, remove the #error line below.
  *****************************************************************************/
+//#error "Trace Recorder: Please include your processor's header file here and remove this line."
 #include "stm32u5xx.h"
 
 /**
@@ -75,7 +75,7 @@ extern "C" {
  * ignored.
  *
  * User Events are application-generated events, like "printf" but for the 
- * trace log, generated using vTracePrint and vTracePrintF. 
+ * trace log, generated using xTracePrint and xTracePrintF. 
  * The formatting is done on host-side, by Tracealyzer. User Events are 
  * therefore much faster than a console printf and can often be used
  * in timing critical code without problems.
@@ -96,18 +96,16 @@ extern "C" {
  *
  * If this is zero (0), the code for recording Interrupt Service Routines is
  * excluded, in order to reduce code size. This means that any calls to
- * vTraceStoreISRBegin/vTraceStoreISREnd will be ignored.
+ * xTraceStoreISRBegin/xTraceStoreISREnd will be ignored.
  * This does not completely disable ISR tracing, in cases where an ISR is
  * calling a traced kernel service. These events will still be recorded and
  * show up in anonymous ISR instances in Tracealyzer, with names such as
  * "ISR sending to <queue name>".
- * To disable such tracing, please refer to vTraceSetFilterGroup and 
- * vTraceSetFilterMask.
  *
  * Default value is 1.
  *
- * Note: tracing ISRs requires that you insert calls to vTraceStoreISRBegin
- * and vTraceStoreISREnd in your interrupt handlers.
+ * Note: tracing ISRs requires that you insert calls to xTraceStoreISRBegin
+ * and xTraceStoreISREnd in your interrupt handlers.
  */
 #define TRC_CFG_INCLUDE_ISR_TRACING 1
 
@@ -117,9 +115,12 @@ extern "C" {
  *
  * If one (1), events are recorded when tasks enter scheduling state "ready".
  * This allows Tracealyzer to show the initial pending time before tasks enter
- * the execution state, and present accurate response times.
+ * the execution state and present accurate response times in the statistics
+ * report.
  * If zero (0), "ready events" are not created, which allows for recording
- * longer traces in the same amount of RAM.
+ * longer traces in the same amount of RAM. This will however cause 
+ * Tracealyzer to report a single instance for each actor and prevent accurate
+ * response times in the statistics report.
  *
  * Default value is 1.
  */
@@ -135,7 +136,50 @@ extern "C" {
  *
  * Default value is 1.
  */
-#define TRC_CFG_INCLUDE_OSTICK_EVENTS 0
+#define TRC_CFG_INCLUDE_OSTICK_EVENTS 1
+
+/**
+ * @def TRC_CFG_ENTRY_SLOTS
+ * @brief The maximum number of objects and symbols that can be stored. This includes:
+ * - Task names
+ * - Named ISRs (xTraceISRRegister)
+ * - Named kernel objects (xTraceObjectSetNameWithoutHandle)
+ * - User event channels (xTraceStringRegister)
+ *
+ * If this value is too small, not all symbol names will be stored and the
+ * trace display will be affected. In that case, there will be warnings
+ * (as User Events) from TzCtrl task, which monitors this.
+ */
+#define TRC_CFG_ENTRY_SLOTS 50
+
+/**
+ * @def TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH
+ * @brief The maximum length of symbol names, including:
+ * - Task names
+ * - Named ISRs (xTraceISRRegister)
+ * - Named kernel objects (xTraceObjectSetNameWithoutHandle)
+ * - User event channel names (xTraceStringRegister)
+ *
+ * If longer symbol names are used, they will be truncated by the recorder,
+ * which will affect the trace display. In that case, there will be warnings
+ * (as User Events) from TzCtrl task, which monitors this.
+ */
+#define TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH 28
+
+/**
+ * @def TRC_CFG_ENABLE_TASK_MONITOR
+ * @brief Enable runtime supervision of CPU time usage per task.
+ * This is used to trigger alert reporting to Percepio Detect
+ * in case of abnormal execution patterns, such as deadlocks,
+ * and provide traces for analysis. See https://percepio.com/detect.
+ */
+#define TRC_CFG_ENABLE_TASK_MONITOR 0
+
+/**
+ * @def TRC_CFG_TASK_MONITOR_MAX_TASKS
+ * @brief The maximum number of tasks that can be monitored by the task monitor.
+ */
+#define TRC_CFG_TASK_MONITOR_MAX_TASKS 10
 
 /**
  * @def TRC_CFG_ENABLE_STACK_MONITOR
@@ -205,15 +249,18 @@ extern "C" {
  * a stream port leveraging the internal buffer (like TCP/IP). A shorter delay
  * increases the CPU load of TzCtrl somewhat, but may improve the performance of
  * of the trace streaming, especially if the trace buffer is small.
+ *
+ * The unit depends on the delay function used for the specific kernel port (trcKernelPort.c).
+ * For example, FreeRTOS uses ticks while Zephyr uses ms.
  */
-#define TRC_CFG_CTRL_TASK_DELAY 1000000
+#define TRC_CFG_CTRL_TASK_DELAY 10
 
 /**
  * @def TRC_CFG_CTRL_TASK_STACK_SIZE
  * @brief The stack size of the Tracealyzer Control (TzCtrl) task.
  * See TRC_CFG_CTRL_TASK_PRIORITY for further information about TzCtrl.
  */
-#define TRC_CFG_CTRL_TASK_STACK_SIZE 128
+#define TRC_CFG_CTRL_TASK_STACK_SIZE 256
 
 /**
  * @def TRC_CFG_RECORDER_BUFFER_ALLOCATION
@@ -222,13 +269,13 @@ extern "C" {
  *
  * Values:
  * TRC_RECORDER_BUFFER_ALLOCATION_STATIC  - Static allocation (internal)
- * TRC_RECORDER_BUFFER_ALLOCATION_DYNAMIC - Malloc in vTraceEnable
- * TRC_RECORDER_BUFFER_ALLOCATION_CUSTOM  - Use vTraceSetRecorderDataBuffer
+ * TRC_RECORDER_BUFFER_ALLOCATION_DYNAMIC - Malloc in xTraceEnable
+ * TRC_RECORDER_BUFFER_ALLOCATION_CUSTOM  - Use xTraceSetBuffer
  *
  * Static and dynamic mode does the allocation for you, either in compile time
  * (static) or in runtime (malloc).
  * The custom mode allows you to control how and where the allocation is made,
- * for details see TRC_ALLOC_CUSTOM_BUFFER and vTraceSetRecorderDataBuffer().
+ * for details see TRC_ALLOC_CUSTOM_BUFFER and xTraceSetBuffer().
  */
 #define TRC_CFG_RECORDER_BUFFER_ALLOCATION TRC_RECORDER_BUFFER_ALLOCATION_STATIC
 
@@ -253,30 +300,26 @@ extern "C" {
  * If tracing multiple ISRs, this setting allows for accurate display of the
  * context-switching also in cases when the ISRs execute in direct sequence.
  *
- * vTraceStoreISREnd normally assumes that the ISR returns to the previous
+ * xTraceStoreISREnd normally assumes that the ISR returns to the previous
  * context, i.e., a task or a preempted ISR. But if another traced ISR
  * executes in direct sequence, Tracealyzer may incorrectly display a minimal
  * fragment of the previous context in between the ISRs.
  *
  * By using TRC_CFG_ISR_TAILCHAINING_THRESHOLD you can avoid this. This is
  * however a threshold value that must be measured for your specific setup.
- * See http://percepio.com/2014/03/21/isr_tailchaining_threshold/
  *
  * The default setting is 0, meaning "disabled" and that you may get an
  * extra fragments of the previous context in between tail-chained ISRs.
- *
- * Note: This setting has separate definitions in trcSnapshotConfig.h and
- * trcStreamingConfig.h, since it is affected by the recorder mode.
  */
 #define TRC_CFG_ISR_TAILCHAINING_THRESHOLD 0
 
 /**
  * @def TRC_CFG_RECORDER_DATA_INIT
- * @brief Macro which states wether the recorder data should have an initial value.
+ * @brief Macro which states whether the recorder data should have an initial value.
  *
  * In very specific cases where traced objects are created before main(),
  * the recorder will need to be started even before that. In these cases,
- * the recorder data would be initialized by vTraceEnable(TRC_INIT) but could
+ * the recorder data would be initialized by xTraceInitialize() but could
  * then later be overwritten by the initialization value.
  * If this is an issue for you, set TRC_CFG_RECORDER_DATA_INIT to 0.
  * The following code can then be used before any traced objects are created:
@@ -285,7 +328,7 @@ extern "C" {
  *	RecorderInitialized = 0;
  *	xTraceInitialize();
  *
- * After the clocks are properly initialized, use vTraceEnable(...) to start
+ * After the clocks are properly initialized, use xTraceEnable(...) to start
  * the tracing.
  *
  * Default value is 1.
@@ -312,14 +355,6 @@ extern "C" {
  * triggered will be in trcAssert.c.
  */
 #define TRC_CFG_USE_TRACE_ASSERT 0
-
-#define TRC_CFG_USE_TRACEALYZER_RECORDER 1
-
-#define TRC_CFG_CPU_CLOCK_HZ (120000000)
-
-#define configPRINTF( x )          printf x
-
-#define configPRINT_STRING( x )    printf( x );
 
 
 #ifdef __cplusplus

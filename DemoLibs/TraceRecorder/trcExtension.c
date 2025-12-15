@@ -1,6 +1,6 @@
 /*
-* Trace Recorder for Tracealyzer v4.10.1
-* Copyright 2023 Percepio AB
+* Trace Recorder for Tracealyzer v989.878.767
+* Copyright 2025 Percepio AB
 * www.percepio.com
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -9,7 +9,7 @@
 */
 #include <trcRecorder.h>
 
-#if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
+#if (TRC_USE_TRACEALYZER_RECORDER == 1)
 
 #define TRC_EXTENSION_BASE_EVENT_ID (TRC_EVENT_LAST_ID + 1UL)
 
@@ -31,7 +31,7 @@ traceResult xTraceExtensionInitialize(TraceExtensionData_t* const pxBuffer)
 	
 	pxExtensionData->uxNextFreeExtensionEventId = TRC_EXTENSION_BASE_EVENT_ID;
 	
-	xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_EXTENSION);
+	(void)xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_EXTENSION);
 	
 	return TRC_SUCCESS;
 }

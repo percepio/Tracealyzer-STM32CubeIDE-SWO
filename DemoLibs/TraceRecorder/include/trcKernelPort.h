@@ -1,6 +1,6 @@
 /*
- * Trace Recorder for Tracealyzer v4.10.1
- * Copyright 2023 Percepio AB
+ * Trace Recorder for Tracealyzer v989.878.767
+ * Copyright 2025 Percepio AB
  * www.percepio.com
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -13,8 +13,6 @@
 
 #include <trcDefines.h>
 
-#define TRC_CFG_USE_TRACEALYZER_RECORDER 1
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,8 +21,6 @@ extern "C" {
 
 #if (TRC_USE_TRACEALYZER_RECORDER == 1)
 	
-
-
 #undef TRC_CFG_ENABLE_STACK_MONITOR
 #define TRC_CFG_ENABLE_STACK_MONITOR 0
 
@@ -40,7 +36,6 @@ extern "C" {
  * @brief Trace CPU clock speed in Hz.
  */
 #define TRACE_CPU_CLOCK_HZ TRC_CFG_CPU_CLOCK_HZ
-
 
 #if (TRC_CFG_RECORDER_BUFFER_ALLOCATION == TRC_RECORDER_BUFFER_ALLOCATION_DYNAMIC)
 #include <stdlib.h> /* Include malloc() */
@@ -59,20 +54,41 @@ extern "C" {
 /**
  * @internal Kernel port specific platform configuration. Maximum name length is 8!
  */
+
+/**
+ * @def TRC_PLATFORM_CFG
+ * @brief This defines the basis for version specific lookup of
+ * platform configuration files.
+ * Should match the intended XML configuration file name.
+ */
 #define TRC_PLATFORM_CFG "generic"
+
+/**
+ * @def TRC_PLATFORM_CFG_MAJOR
+ * @brief Major release version for platform definition file.
+ * Should match the intended XML configuration file name.
+ */
 #define TRC_PLATFORM_CFG_MAJOR 1
+
+/**
+ * @def TRC_PLATFORM_CFG_MINOR
+ * @brief Minor release version for platform definition file.
+ * Should match the intended XML configuration file name.
+ */
 #define TRC_PLATFORM_CFG_MINOR 0
+
+/**
+ * @def TRC_PLATFORM_CFG_PATCH
+ * @brief Patchlevel release version for platform definition file.
+ * Should match the intended XML configuration file name.
+ */
 #define TRC_PLATFORM_CFG_PATCH 0
 
 #ifndef TRACE_ENTER_CRITICAL_SECTION
-	#error "This hardware port has no definition for critical sections! See http://percepio.com/2014/10/27/how-to-define-critical-sections-for-the-recorder/"
+	#error "This hardware port has no definition for critical sections! See https://percepio.com/how-to-define-critical-sections-for-the-recorder/"
 #endif
 
-#if (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
 #define TRC_KERNEL_PORT_BUFFER_SIZE (sizeof(TraceTaskHandle_t) * (TRC_CFG_CORE_COUNT))
-#else
-#define TRC_KERNEL_PORT_BUFFER_SIZE (sizeof(TraceUnsignedBaseType_t) * (TRC_CFG_CORE_COUNT))
-#endif
 
 /**
  * @internal The kernel port data buffer
@@ -117,18 +133,6 @@ traceResult xTraceKernelPortEnable(void);
  * @retval 0 Scheduler not suspended
  */
 #define xTraceKernelPortIsSchedulerSuspended() (0U)
-
-/******************************************************************************/
-/*** Definitions for Snapshot mode ********************************************/
-/******************************************************************************/
-#if (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_SNAPSHOT)
-
-#endif
-
-/******************************************************************************/
-/*** Definitions for Streaming mode *******************************************/
-/******************************************************************************/
-#if (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
 
 /*************************************************************************/
 /* KERNEL SPECIFIC OBJECT CONFIGURATION									 */
@@ -199,9 +203,7 @@ traceResult xTraceKernelPortEnable(void);
 
 #define PSF_EVENT_USER_EVENT_FIXED							0x58UL
 
-#define TRC_EVENT_LAST_ID									(PSF_EVENT_DEPENDENCY_REGISTER)
-
-#endif
+#define TRC_EVENT_LAST_ID									(PSF_EVENT_USER_EVENT_FIXED + 8ul)
 
 #endif
 
@@ -209,4 +211,4 @@ traceResult xTraceKernelPortEnable(void);
 }
 #endif
 
-#endif /* TRC_KERNEL_PORT_H */
+#endif

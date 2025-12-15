@@ -1,6 +1,6 @@
 /*
-* Trace Recorder for Tracealyzer v4.10.1
-* Copyright 2023 Percepio AB
+* Trace Recorder for Tracealyzer v989.878.767
+* Copyright 2025 Percepio AB
 * www.percepio.com
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -10,7 +10,7 @@
 
 #include <trcRecorder.h>
 
-#if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
+#if (TRC_USE_TRACEALYZER_RECORDER == 1)
 
 #include <string.h>
 
@@ -70,7 +70,7 @@ traceResult xTraceEntryTableInitialize(TraceEntryTable_t* const pxBuffer)
 		pxEntryTable->axEntries[i].szSymbol[0] = (char)0; /*cstat !MISRAC2004-6.3 !MISRAC2012-Dir-4.6_a Suppress basic char type usage*/
 	}
 
-	xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_ENTRY);
+	(void)xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_ENTRY);
 
 	return TRC_SUCCESS;
 }
@@ -319,7 +319,7 @@ traceResult xTraceEntryGetAddress(const TraceEntryHandle_t xEntryHandle, void **
 	return TRC_ENTRY_GET_ADDRESS(xEntryHandle, ppvAddress);
 }
 
-void* xTraceEntryGetAddressReturn(const TraceEntryHandle_t xEntryHandle)
+void* pvTraceEntryGetAddressReturn(const TraceEntryHandle_t xEntryHandle)
 {
 	/* This should never fail */
 	TRC_ASSERT_CUSTOM_ON_FAIL(xTraceIsComponentInitialized(TRC_RECORDER_COMPONENT_ENTRY), return (void*)0);

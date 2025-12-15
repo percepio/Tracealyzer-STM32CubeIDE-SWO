@@ -1,6 +1,6 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v4.10.1
-* Copyright 2023 Percepio AB
+* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Copyright 2025 Percepio AB
 * www.percepio.com
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -10,9 +10,33 @@
 
 #include <trcRecorder.h>
 
-#if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
+#if (TRC_USE_TRACEALYZER_RECORDER == 1)
 
 #include <string.h>
+
+#ifdef TRC_USE_CUSTOM_STREAMPORT_ALLOCATION
+
+#if (TRC_USE_INTERNAL_BUFFER == 1)
+#error The internal buffer should not be enabled while custom streamport allocation is enabled!
+#endif
+
+/* Custom streamport allocation/commit functions should be used */
+#define xTraceEventAllocate(_uiSize, _ppvData) xTraceStreamPortAllocate(_uiSize, _ppvData)
+#define xTraceEventCommit(_pvData, _uiSize, _piBytesCommitted) xTraceStreamPortCommit(_pvData, _uiSize, _piBytesCommitted)
+
+#elif (TRC_USE_INTERNAL_BUFFER == 1)
+
+/* Using the internal event buffer */
+#define xTraceEventAllocate(_uiSize, _ppvData) xTraceInternalEventBufferAlloc(_uiSize, _ppvData)
+#define xTraceEventCommit(_pvData, _uiSize, _piBytesCommitted) xTraceInternalEventBufferAllocCommit(_pvData, _uiSize, _piBytesCommitted)
+
+#else
+
+/* Default implementation that will be used if the streamport doesn't implement a custom allocation/commit method and the internal buffer isn't used */
+#define xTraceEventAllocate(_uiSize, _ppvData) ((void)(_uiSize), xTraceStaticBufferGet(_ppvData))
+#define xTraceEventCommit(_pvData, _uiSize, _piBytesCommitted) xTraceStreamPortWriteData(_pvData, _uiSize, TRC_CFG_GET_CURRENT_CORE(), _piBytesCommitted)
+
+#endif
 
 /**
  * @internal Macro helper for setting trace event parameter count.
@@ -42,13 +66,13 @@
 	( \
 		(pxEvent)->EventID = TRC_EVENT_SET_PARAM_COUNT(eventId, paramCount), \
 		(pxEvent)->EventCount = TRC_EVENT_SET_EVENT_COUNT(eventCount), \
-		xTraceTimestampGet(&(pxEvent)->TS) \
+		(void)xTraceTimestampGet(&(pxEvent)->TS) \
 	)
 
 #define TRACE_EVENT_BEGIN_OFFLINE(size) 														\
 	TRACE_ENTER_CRITICAL_SECTION();              										\
 	pxTraceEventDataTable->coreEventData[TRC_CFG_GET_CURRENT_CORE()].eventCounter++; 	\
-	if (xTraceStreamPortAllocate((uint32_t)(size), (void**)&pxEventData) == TRC_FAIL) /*cstat !MISRAC2004-11.4 !MISRAC2012-Rule-11.3 Suppress pointer checks*/ \
+	if (xTraceEventAllocate((uint32_t)(size), (void**)&pxEventData) == TRC_FAIL)  /*cstat !MISRAC2004-11.4 !MISRAC2012-Rule-11.3 Suppress pointer checks*/ \
 	{                                            										\
 		TRACE_EXIT_CRITICAL_SECTION();              									\
 		return TRC_FAIL; 																\
@@ -65,10 +89,10 @@
 
 
 #define TRACE_EVENT_END(size) 															\
-	(void)xTraceStreamPortCommit(pxEventData, (uint32_t)(size), &iBytesCommitted); 					\
+	(void)xTraceEventCommit(pxEventData, (uint32_t)(size), &iBytesCommitted); 			\
 	TRACE_EXIT_CRITICAL_SECTION(); 														\
-	/* We need to use iBytesCommitted for the above call but do not use the value, 		\
-	 * remove potential warnings */ 													\
+	/* We need to use iBytesCommitted for the above call but do not use the value */	\
+	/* Remove potential warnings */ 													\
 	(void)iBytesCommitted;
 
 #define TRACE_EVENT_ADD_1(__p1)									\
@@ -137,7 +161,7 @@ traceResult xTraceEventInitialize(TraceEventDataTable_t* pxBuffer)
 		pxTraceEventDataTable->coreEventData[i].eventCounter = 0u;
 	}
 
-	xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_EVENT);
+	(void)xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_EVENT);
 
 	return TRC_SUCCESS;
 }
@@ -263,10 +287,10 @@ traceResult xTraceEventCreateRawBlocking(const void* pxSource, uint32_t ulSize)
 	TRACE_ENTER_CRITICAL_SECTION();
 
 	pxTraceEventDataTable->coreEventData[TRC_CFG_GET_CURRENT_CORE()].eventCounter++;
-	while (xTraceStreamPortAllocate(ulSize, (void**)&pxBuffer) == TRC_FAIL) {}
+	while (xTraceEventAllocate(ulSize, (void**)&pxBuffer) == TRC_FAIL) {}
 
 	memcpy(pxBuffer, pxSource, ulSize);
-	while (xTraceStreamPortCommit(pxBuffer, ulSize, &iBytesCommitted) == TRC_FAIL) {}
+	while (xTraceEventCommit(pxBuffer, ulSize, &iBytesCommitted) == TRC_FAIL) {}
 	(void)iBytesCommitted;
 
 	TRACE_EXIT_CRITICAL_SECTION();
@@ -512,7 +536,7 @@ traceResult xTraceEventGetSize(const void* const pvAddress, uint32_t* puiSize)
 	TRC_ASSERT(puiSize != (void*)0);
 
 	/* This should never fail */
-	TRC_ASSERT((sizeof(TraceEvent0_t) + ((uint32_t)(uint16_t)(TRC_EVENT_GET_PARAM_COUNT(((const TraceEvent0_t*)pvAddress)->EventID)) * sizeof(uint32_t))) <= (uint32_t)(TRC_MAX_BLOB_SIZE)); /*cstat !MISRAC2012-Rule-11.5 Suppress pointer checks*/
+	TRC_ASSERT((sizeof(TraceEvent0_t) + ((uint32_t)(uint16_t)(TRC_EVENT_GET_PARAM_COUNT(((const TraceEvent0_t*)pvAddress)->EventID)) * sizeof(TraceUnsignedBaseType_t))) <= (uint32_t)(TRC_MAX_BLOB_SIZE)); /*cstat !MISRAC2012-Rule-11.5 Suppress pointer checks*/
 	
 	return TRC_EVENT_GET_SIZE(pvAddress, puiSize);
 }

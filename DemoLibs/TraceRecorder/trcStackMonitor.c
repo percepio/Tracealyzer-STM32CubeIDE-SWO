@@ -1,6 +1,6 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v4.10.1
-* Copyright 2023 Percepio AB
+* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Copyright 2025 Percepio AB
 * www.percepio.com
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -10,7 +10,7 @@
 
 #include <trcRecorder.h>
 
-#if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING) && ((TRC_CFG_ENABLE_STACK_MONITOR) == 1) && ((TRC_CFG_SCHEDULING_ONLY) == 0)
+#if (TRC_USE_TRACEALYZER_RECORDER == 1) && ((TRC_CFG_ENABLE_STACK_MONITOR) == 1) && ((TRC_CFG_SCHEDULING_ONLY) == 0)
 
 #ifndef TRC_CFG_ALLOW_TASK_DELETE
 #define TRC_CFG_ALLOW_TASK_DELETE 1
@@ -34,7 +34,7 @@ traceResult xTraceStackMonitorInitialize(TraceStackMonitorData_t *pxBuffer)
 		pxStackMonitor->xEntries[i].pvTask = 0;
 	}
 	
-	xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_STACK_MONITOR);
+	(void)xTraceSetComponentInitialized(TRC_RECORDER_COMPONENT_STACK_MONITOR);
 
 	return TRC_SUCCESS;
 }

@@ -1,6 +1,6 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v4.10.1
-* Copyright 2023 Percepio AB
+* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Copyright 2025 Percepio AB
 * www.percepio.com
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -15,7 +15,7 @@
 #ifndef TRC_PRINT_H
 #define TRC_PRINT_H
 
-#if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING) && (TRC_CFG_INCLUDE_USER_EVENTS == 1)
+#if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_INCLUDE_USER_EVENTS == 1)
 
 #include <stdarg.h>
 #include <trcTypes.h>
@@ -177,7 +177,7 @@ traceResult xTracePrintCompactF(const char* szChannel, const char* szFormat, ...
  *	xTraceStringRegister("MyChannel", &xChannel);
  *	xTraceStringRegister("Hello world!", &xHelloWorld);
  *	...
- *	xTracePrintFormat0(xChannel, xHelloWorld);
+ *	xTracePrintF0(xChannel, xHelloWorld);
  *
  * @param[in] xChannel Channel handle.
  * @param[in] xFormatStringHandle Format string handle.
@@ -200,7 +200,7 @@ traceResult xTracePrintCompactF(const char* szChannel, const char* szFormat, ...
  *	xTraceStringRegister("MyChannel", &xChannel);
  *	xTraceStringRegister("Hello world! %d", &xHelloWorld);
  *	...
- *	xTracePrintFormat1(xChannel, xHelloWorld, 1);
+ *	xTracePrintF1(xChannel, xHelloWorld, 1);
  *
  * @param[in] xChannel Channel handle.
  * @param[in] xFormatStringHandle Format string handle.
@@ -224,7 +224,7 @@ traceResult xTracePrintCompactF(const char* szChannel, const char* szFormat, ...
  *	xTraceStringRegister("MyChannel", &xChannel);
  *	xTraceStringRegister("Hello world! %d %d", &xHelloWorld);
  *	...
- *	xTracePrintFormat2(xChannel, xHelloWorld, 1, 2);
+ *	xTracePrintF2(xChannel, xHelloWorld, 1, 2);
  *
  * @param[in] xChannel Channel handle.
  * @param[in] xFormatStringHandle Format string handle.
@@ -249,7 +249,7 @@ traceResult xTracePrintCompactF(const char* szChannel, const char* szFormat, ...
  *	xTraceStringRegister("MyChannel", &xChannel);
  *	xTraceStringRegister("Hello world! %d %d %d", &xHelloWorld);
  *	...
- *	xTracePrintFormat3(xChannel, xHelloWorld, 1, 2, 3);
+ *	xTracePrintF3(xChannel, xHelloWorld, 1, 2, 3);
  *
  * @param[in] xChannel Channel handle.
  * @param[in] xFormatStringHandle Format string handle.
@@ -275,7 +275,7 @@ traceResult xTracePrintCompactF(const char* szChannel, const char* szFormat, ...
  *	xTraceStringRegister("MyChannel", &xChannel);
  *	xTraceStringRegister("Hello world! %d %d %d %d", &xHelloWorld);
  *	...
- *	xTracePrintFormat4(xChannel, xHelloWorld, 1, 2, 3, 4);
+ *	xTracePrintF4(xChannel, xHelloWorld, 1, 2, 3, 4);
  *
  * @param[in] xChannel Channel handle.
  * @param[in] xFormatStringHandle Format string handle.
@@ -323,7 +323,7 @@ traceResult xTracePrint(TraceStringHandle_t xChannel, const char* szString);
 /**
  * @brief Wrapper for xTracePrintF for printing to default channel.
  * 
- * Wrapper for vTracePrintF, using the default channel. Can be used as a drop-in
+ * Wrapper for xTracePrintF, using the default channel. Can be used as a drop-in
  * replacement for printf and similar functions, e.g. in a debug logging macro.
  * NOTE! All parameters must be cast to TraceUnsignedBaseType_t/TraceBaseType_t!
  * 
@@ -374,20 +374,21 @@ traceResult xTraceConsoleChannelPrintF(const char* szFormat, ...);
  *	 ...
  *	 xTracePrintF(adc_uechannel,
  *				 "ADC channel %d: %d volts",
- *				 ch, adc_reading);
+ *				 ch, (TraceBaseType_t)adc_reading);
  *
- * NOTE! All data arguments are assumed to be TraceUnsignedBaseType_t/TraceBaseType_t. The following formats are
- * supported:
+ * NOTE! All data arguments must be TraceUnsignedBaseType_t or TraceBaseType_t.
+ *
+ * The following formats are supported:
  * %d - signed integer. The following width and padding format is supported: "%05d" -> "-0042" and "%5d" -> "  -42"
  * %u - unsigned integer. The following width and padding format is supported: "%05u" -> "00042" and "%5u" -> "   42"
  * %X - hexadecimal (uppercase). The following width and padding format is supported: "%04X" -> "002A" and "%4X" -> "  2A"
  * %x - hexadecimal (lowercase). The following width and padding format is supported: "%04x" -> "002a" and "%4x" -> "  2a"
- * %s - string (currently, this must be an earlier stored symbol name)
+ * %s - string. A TraceStringHandle_t from a string that was stored using xTraceStringRegister(...).
  *
- * Up to 15 data arguments are allowed, with a total size of maximum 60 byte
- * including 8 byte for the base event fields and the format string. So with
- * one data argument, the maximum string length is 48 chars. If this is exceeded
- * the string is truncated (4 bytes at a time).
+ * A maximum of 5 parameters will be stored in the event along with the format string.
+ * On a 32-bit system; a maximum size of 52 bytes is allowed for the parameters and format string combined. Each parameter takes 4 bytes.
+ * On a 64-bit system; a maximum size of 112 bytes is allowed for the parameters and format string combined. Each parameter takes 8 bytes.
+ * The format string will be truncated if maximum size is exceeded.
  * 
  * @param[in] xChannel Channel.
  * @param[in] szFormat Format.
