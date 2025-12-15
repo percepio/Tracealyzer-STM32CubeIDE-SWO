@@ -68,6 +68,14 @@ thread_gdb_swo_reader.start();
 
 running = True
 
+# Allows for logging all ITM data (the raw data stream). Set to True to generate rawtrace.bin. For (internal) debugging purposes.
+ENABLE_RAWTRACE = False 
+
+if ENABLE_RAWTRACE:
+    _rawtrace_f = open("rawtrace.bin", "wb")
+else:
+    _rawtrace_f = None
+
 try:
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 except:        
@@ -89,7 +97,11 @@ while running:
             break
         
         try:
-            tz_client_socket.send(qdata)            
+            tz_client_socket.send(qdata)    
+
+            if ENABLE_RAWTRACE:
+                _rawtrace_f.write(qdata)
+                
         except Exception as e:
             # Typically "disconnect" exceptions, not worth logging in trace_error.log.
             print(e)
@@ -97,6 +109,9 @@ while running:
             
     except KeyboardInterrupt:
         running = False 
+
+if ENABLE_RAWTRACE:
+    _rawtrace_f.close()
 
 tz_client_socket.close()
 server_socket.close()
