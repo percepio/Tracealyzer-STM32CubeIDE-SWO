@@ -6,18 +6,19 @@
 #define REGISTER_TASK(ID, name, prio) xTraceTaskRegisterWithoutHandle((void*)ID, name, prio)
 
 #define TASK_IDLE 100
-#define TASK_MAIN 101
-#define TASK_A 102
-#define TASK_B 103
+#define TASK_A 101
+#define TASK_B 102
 
 volatile unsigned int throttle_delay = 1000;
 
-TraceStringHandle_t chn = NULL;
+TraceStringHandle_t fmt, chn = NULL;
 
 void busy_wait(int i);
 
 int main(void)
 {
+	int i;
+
 	vTraceInitialize();
 
 	HAL_Init();
@@ -50,8 +51,10 @@ int main(void)
 	/* Register a name to use as "channel" in xTracePrintF below. */
 	xTraceStringRegister("Throttle delay", &chn);
 
+	/* To use the faster xTracePrintF1 logging function, the format string is pre-registered as well. */
+	xTraceStringRegister("%d", &fmt);
+
 	/* Not needed when using an RTOS... */
-    REGISTER_TASK(TASK_MAIN, "main-thread", 0);
     REGISTER_TASK(TASK_A, "TaskA", 5);
     REGISTER_TASK(TASK_B, "TaskB", 10);
     REGISTER_TASK(TASK_IDLE, "IDLE", 0);
@@ -62,17 +65,21 @@ int main(void)
     xTraceTaskReady(TASK_IDLE);
     busy_wait(100);
 
+    i = 0;
    /* Main loop */
     while(1)
     {
-    	xTracePrintF(chn, "Throttle delay: %d",  throttle_delay);
-
     	/* This demo is without specific RTOS assumptions, so calling tracing functions directly. Using the baremetal kernelport.
     	 * These functions are normally called by the RTOS kernel if using a supported RTOS. */
 
         xTraceTaskReady(TASK_A);
 
         xTraceTaskSwitch((void*)TASK_A, 5);
+
+        /* Log throttle_delay every 16th iteration, using an extra fast logging function. */
+        if (i++ % 16 == 0)
+        	xTracePrintF1(chn, fmt,  throttle_delay);
+
         busy_wait(throttle_delay*2);
 
         xTraceTaskReady(TASK_B);
@@ -83,7 +90,7 @@ int main(void)
         busy_wait(throttle_delay);
 
         xTraceTaskSwitch((void*)TASK_IDLE, 0);
-        busy_wait(throttle_delay*10);
+        busy_wait(throttle_delay*16);
     }
 
     return 0;
