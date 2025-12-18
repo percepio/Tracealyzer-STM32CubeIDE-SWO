@@ -3,14 +3,18 @@
 #include "main.h"
 #include "trcRecorder.h"
 
-#define REGISTER_TASK(ID, name) xTraceTaskRegisterWithoutHandle((void*)ID, name, 0)
+#define REGISTER_TASK(ID, name, prio) xTraceTaskRegisterWithoutHandle((void*)ID, name, prio)
 
 #define TASK_IDLE 100
 #define TASK_MAIN 101
+#define TASK_A 102
+#define TASK_B 103
 
-volatile unsigned int throttle_delay = 5000;
+volatile unsigned int throttle_delay = 1000;
 
 TraceStringHandle_t chn = NULL;
+
+void busy_wait(int i);
 
 int main(void)
 {
@@ -47,29 +51,47 @@ int main(void)
 	xTraceStringRegister("Throttle delay", &chn);
 
 	/* Not needed when using an RTOS... */
-    REGISTER_TASK(TASK_MAIN, "main-thread");
-    REGISTER_TASK(TASK_IDLE, "IDLE");
-    xTraceTaskReady(TASK_IDLE);
-    xTraceTaskReady(TASK_MAIN);
+    REGISTER_TASK(TASK_MAIN, "main-thread", 0);
+    REGISTER_TASK(TASK_A, "TaskA", 5);
+    REGISTER_TASK(TASK_B, "TaskB", 10);
+    REGISTER_TASK(TASK_IDLE, "IDLE", 0);
+
     __set_BASEPRI(0);
     __enable_irq();
+
+    xTraceTaskReady(TASK_IDLE);
+    busy_wait(100);
 
    /* Main loop */
     while(1)
     {
-    	/* Not needed when using an RTOS... */
-        xTraceTaskReady(TASK_MAIN);
-    	xTraceTaskSwitch((void*)TASK_MAIN, 0);
+    	xTracePrintF(chn, "Throttle delay: %d",  throttle_delay);
 
-    	/* The loop below represents idle time... */
+    	/* This demo is without specific RTOS assumptions, so calling tracing functions directly. Using the baremetal kernelport.
+    	 * These functions are normally called by the RTOS kernel if using a supported RTOS. */
+
+        xTraceTaskReady(TASK_A);
+
+        xTraceTaskSwitch((void*)TASK_A, 5);
+        busy_wait(throttle_delay*2);
+
+        xTraceTaskReady(TASK_B);
+        xTraceTaskSwitch((void*)TASK_B, 10);
+        busy_wait(throttle_delay);
+
+        xTraceTaskSwitch((void*)TASK_A, 5);
+        busy_wait(throttle_delay);
+
         xTraceTaskSwitch((void*)TASK_IDLE, 0);
-
-    	/* The throttle delay, allows for adjusting the data rate. */
-    	for (volatile int counter=0; counter<throttle_delay; counter++);
-
+        busy_wait(throttle_delay*10);
     }
 
     return 0;
+}
+
+void busy_wait(int i)
+{
+	for (volatile int counter=0; counter<i; counter++);
 }
 
 /* If pushing the blue "User Button" on the board */
