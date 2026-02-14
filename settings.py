@@ -23,3 +23,7 @@ GDB_SWO_PORT = '61997'
 # script. If you change this, also update the SWO port number in your Debug Configuration 
 # under "Serial Wire Viewer" settings.
 IDE_SWO_PORT = '61035'
+
+# Most target MCUs have only one access port (AP).
+# If you need to connect to a different port, you can specify it here.
+APID = '0'

@@ -13,6 +13,9 @@ echo   GDB_SERVER_PATH: %GDB_SERVER_PATH%
 set STLINK_PROG_DIR=%4%
 echo   STLINK_PROG_DIR: %STLINK_PROG_DIR%
 
+set APID=%5%
+echo   APID: %APID%
+
 %GDB_SERVER_PATH% ^
 --port-number %GDB_PORT% ^
 --swd ^
@@ -21,4 +24,4 @@ echo   STLINK_PROG_DIR: %STLINK_PROG_DIR%
 --attach ^
 --verbose ^
 -cp %STLINK_PROG_DIR% ^
--m 0
+-m %APID%
